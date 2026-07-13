@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>TheFitnessDen — Workout & Diet Tracker</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#5C6E28">
+<style>
+  :root{
+    --bg:#FFFFFF; --panel:#FAFBF5; --panel2:#F0F3E6; --border:#E1E6D3;
+    --text:#2E3324; --muted:#767F67;
+    --olive:#5C6E28; --olive-dark:#42501D; --olive-light:#8CA35A; --olive-pale:#E7EEDA;
+    --carb:#B98B3E; --fat:#A5673A; --red:#B3453D; --white:#FFFFFF;
+    --radius:16px;
+    --shadow:0 2px 10px rgba(92,110,40,0.08);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:20px;}
+
+  header{padding:20px 16px 12px;max-width:900px;margin:0 auto;background:var(--white);}
+  .brandrow{display:flex;align-items:center;gap:12px;}
+  .logo-badge{width:46px;height:46px;flex:none;border-radius:14px;background:var(--olive);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);}
+  .logo-badge svg{width:26px;height:26px;}
+  h1{font-size:1.35rem;margin:0;color:var(--olive-dark);letter-spacing:-.01em;}
+  h1 span{color:var(--olive-light);}
+  .sub{color:var(--muted);font-size:0.85rem;margin-top:2px;}
+
+  .herostrip{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+  .herochip{background:var(--olive-pale);color:var(--olive-dark);font-size:0.72rem;font-weight:700;padding:6px 12px;border-radius:20px;}
+
+  nav.tabs{display:flex;gap:6px;max-width:900px;margin:0 auto;padding:10px 16px 12px;position:sticky;top:0;background:var(--white);z-index:20;box-shadow:0 2px 8px rgba(0,0,0,0.04);}
+  nav.tabs button{flex:1;background:var(--panel2);border:1px solid var(--border);color:var(--muted);padding:10px 4px;border-radius:12px;font-size:0.8rem;font-weight:700;cursor:pointer;}
+  nav.tabs button.active{background:var(--olive);color:var(--white);border-color:var(--olive);}
+
+  main{max-width:900px;margin:0 auto;padding:6px 16px 60px;}
+  .view{display:none;} .view.active{display:block;}
+
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px;box-shadow:var(--shadow);}
+  .card h2{margin:0 0 10px;font-size:1.05rem;color:var(--olive-dark);}
+  .card h3{margin:14px 0 8px;font-size:0.82rem;color:var(--olive);font-weight:800;text-transform:uppercase;letter-spacing:.05em;}
+  .card h3:first-child{margin-top:0;}
+  .note{color:var(--muted);font-size:0.83rem;background:var(--olive-pale);border-left:3px solid var(--olive);padding:9px 11px;border-radius:8px;margin-top:8px;}
+  .pillrow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+  .pill{background:var(--panel2);border:1px solid var(--border);color:var(--muted);padding:7px 13px;border-radius:20px;font-size:0.78rem;font-weight:700;cursor:pointer;}
+  .pill.active{background:var(--olive);color:var(--white);border-color:var(--olive);}
+
+  /* checklist (warmup/cooldown) */
+  ul.check{list-style:none;margin:0;padding:0;}
+  ul.check li{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--border);font-size:0.87rem;}
+  ul.check li:last-child{border-bottom:none;}
+  ul.check li.done{color:var(--muted);text-decoration:line-through;}
+  .chk{width:22px;height:22px;flex:none;border:2px solid var(--border);border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.75rem;background:var(--white);}
+  .chk.on{background:var(--olive);border-color:var(--olive);color:var(--white);}
+
+  /* progress bar */
+  .progwrap{background:var(--panel2);border-radius:20px;height:10px;overflow:hidden;margin-bottom:12px;}
+  .progbar{background:var(--olive);height:100%;border-radius:20px;transition:width .3s;}
+  .progtext{font-size:0.75rem;color:var(--muted);font-weight:700;margin-bottom:6px;}
+
+  /* exercise card */
+  .ex-card{background:var(--white);border:1px solid var(--border);border-left:4px solid var(--olive-light);border-radius:12px;padding:12px;margin-bottom:10px;}
+  .ex-card.done{opacity:0.5;border-left-color:var(--border);}
+  .ex-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+  .ex-left{display:flex;gap:10px;align-items:flex-start;}
+  .ic-badge{width:34px;height:34px;flex:none;border-radius:10px;background:var(--olive-pale);color:var(--olive);display:flex;align-items:center;justify-content:center;}
+  .ic-badge svg{width:18px;height:18px;fill:var(--olive);}
+  .ex-name{font-weight:700;font-size:0.92rem;color:var(--text);}
+  .ex-target{color:var(--muted);font-size:0.78rem;margin-top:2px;}
+  .ex-video{display:inline-block;margin-top:4px;font-size:0.75rem;color:var(--olive);font-weight:700;text-decoration:none;}
+  .ex-video:hover{text-decoration:underline;}
+  .swap-select{background:var(--white);border:1px solid var(--border);color:var(--text);font-size:0.72rem;border-radius:8px;padding:4px 6px;max-width:130px;}
+  .log-row{display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap;}
+  .log-row input{width:74px;background:var(--white);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 8px;font-size:0.85rem;}
+  .log-row label{font-size:0.72rem;color:var(--muted);}
+  .logbtn{background:var(--olive);color:var(--white);border:none;border-radius:8px;padding:8px 14px;font-size:0.78rem;font-weight:700;cursor:pointer;}
+  .logged-tag{font-size:0.75rem;color:var(--olive);font-weight:700;margin-top:8px;}
+  .startbtn, .bigbtn{width:100%;background:var(--olive);color:var(--white);border:none;border-radius:12px;padding:14px;font-size:0.95rem;font-weight:800;cursor:pointer;margin-top:6px;box-shadow:var(--shadow);}
+  .bigbtn:disabled{background:var(--panel2);color:var(--muted);cursor:not-allowed;box-shadow:none;}
+  .bigbtn.secondary{background:var(--white);color:var(--text);border:1px solid var(--border);box-shadow:none;}
+
+  /* modal */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(46,51,36,.5);z-index:100;align-items:center;justify-content:center;padding:20px;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--white);border:1px solid var(--border);border-radius:18px;padding:20px;max-width:420px;width:100%;max-height:85vh;overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,0.2);}
+  .modal h2{margin-top:0;font-size:1.05rem;color:var(--olive-dark);}
+  .qgroup{margin-bottom:16px;}
+  .qgroup label.qlabel{display:block;font-size:0.85rem;font-weight:700;margin-bottom:8px;color:var(--text);}
+  .optrow{display:flex;gap:6px;flex-wrap:wrap;}
+  .optbtn{background:var(--panel2);border:1px solid var(--border);color:var(--muted);padding:7px 12px;border-radius:10px;font-size:0.78rem;cursor:pointer;}
+  .optbtn.sel{background:var(--olive);color:var(--white);border-color:var(--olive);}
+  textarea.qtext{width:100%;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px;font-size:0.85rem;resize:vertical;min-height:50px;}
+
+  /* diet */
+  .meal{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;box-shadow:var(--shadow);}
+  .meal-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;flex-wrap:wrap;gap:6px;}
+  .meal-name{font-weight:700;font-size:0.95rem;color:var(--olive-dark);}
+  .meal-time{color:var(--muted);font-size:0.75rem;}
+  .meal-items{color:var(--text);font-size:0.87rem;line-height:1.5;margin-bottom:8px;}
+  .badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+  .badge{font-size:0.7rem;font-weight:700;padding:3px 9px;border-radius:12px;background:var(--panel2);border:1px solid var(--border);}
+  .b-p{color:var(--olive);} .b-c{color:var(--carb);} .b-f{color:var(--fat);} .b-k{color:var(--olive-dark);}
+  select.swap-meal{width:100%;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px;font-size:0.82rem;}
+  .totals{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;background:var(--olive-pale);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-top:6px;}
+  .totals .t{text-align:center;} .totals .t .n{font-size:1.1rem;font-weight:800;color:var(--olive-dark);} .totals .t .l{font-size:0.68rem;color:var(--muted);text-transform:uppercase;}
+
+  /* progress tab */
+  .session{background:var(--white);border:1px solid var(--border);border-left:4px solid var(--olive);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:0.85rem;box-shadow:var(--shadow);}
+  .session .srow1{display:flex;justify-content:space-between;font-weight:700;color:var(--olive-dark);}
+  .session .srow2{color:var(--muted);font-size:0.78rem;margin-top:2px;}
+  .empty{color:var(--muted);font-size:0.85rem;text-align:center;padding:20px 0;}
+
+  .journey{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+  .journey .step{background:var(--olive-pale);border:1px solid var(--border);border-radius:10px;padding:10px 14px;text-align:center;}
+  .journey .step .kg{font-size:1.15rem;font-weight:800;color:var(--olive-dark);} .journey .step .lbl{font-size:0.68rem;color:var(--muted);}
+  .journey .arrow{color:var(--olive-light);font-size:1.2rem;}
+  ul.tiplist{margin:0;padding-left:18px;font-size:0.87rem;line-height:1.7;}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--olive);color:var(--white);font-weight:700;padding:10px 20px;border-radius:20px;font-size:0.85rem;z-index:200;display:none;box-shadow:0 4px 16px rgba(0,0,0,0.25);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brandrow">
+    <div class="logo-badge">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#FFFFFF" d="M12 3c1.2 0 1.4 1.5.7 2.5-.6.9-1.6 1-1.6 2a1.4 1.4 0 002.8 0c0-.5-.4-.8-.4-1.3.8.5 1.4 1.4 1.4 2.5a2.4 2.4 0 01-4.8 0c0-2.4 1.4-3.4 1.9-5.7z"/>
+        <circle cx="12" cy="12" r="10.2" fill="none" stroke="#FFFFFF" stroke-width="1.4"/>
+      </svg>
+    </div>
+    <div>
+      <h1>The<span>Fitness</span>Den</h1>
+      <div class="sub">Fat loss + toning program — 78kg start, built for a lean, sculpted look</div>
+    </div>
+  </div>
+  <div class="herostrip">
+    <div class="herochip">🎯 Swimmer-body goal</div>
+    <div class="herochip">🔥 600–700+ kcal/session</div>
+    <div class="herochip">🔁 New program every 3 weeks</div>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-view="workout">🏋️ Workout</button>
+  <button class="tab-btn" data-view="diet">🍽️ Diet</button>
+  <button class="tab-btn" data-view="progress">📈 Progress</button>
+  <button class="tab-btn" data-view="tips">💡 Tips</button>
+</nav>
+
+<main>
+
+<!-- ============ WORKOUT VIEW ============ -->
+<section class="view active" id="view-workout">
+
+  <div class="card">
+    <h3>Phase (changes every 3 weeks)</h3>
+    <div class="pillrow" id="phasePills"></div>
+    <div class="note" id="phaseNote"></div>
+  </div>
+
+  <div class="card">
+    <h3>Day</h3>
+    <div class="pillrow" id="dayPills"></div>
+  </div>
+
+  <div class="card" id="warmupCard">
+    <h2>🔥 Warm-Up (~6–7 min)</h2>
+    <ul class="check" id="warmupList"></ul>
+  </div>
+
+  <div class="card">
+    <h2 id="dayTitle">Workout</h2>
+    <div class="note" id="kcalNote"></div>
+    <div class="progtext" id="progText"></div>
+    <div class="progwrap"><div class="progbar" id="progBar" style="width:0%"></div></div>
+    <div id="exerciseList"></div>
+    <div id="finisherBlock"></div>
+  </div>
+
+  <div class="card" id="cooldownCard">
+    <h2>🧘 Cool-Down (~6–7 min)</h2>
+    <ul class="check" id="cooldownList"></ul>
+  </div>
+
+  <button class="bigbtn" id="completeBtn" disabled>Complete Workout ✅</button>
+  <div class="note" id="completeHint">Check off warm-up, log every exercise, then check off cool-down to unlock this button.</div>
+
+</section>
+
+<!-- ============ DIET VIEW ============ -->
+<section class="view" id="view-diet">
+  <div class="card">
+    <h3>Day Type</h3>
+    <div class="pillrow">
+      <button class="pill active" data-diet="weekday">Mon–Sat</button>
+      <button class="pill" data-diet="sunday">Sunday (Cheat Day)</button>
+    </div>
+    <div class="note" id="dietBlurb"></div>
+  </div>
+  <div class="card" id="mealContainer"></div>
+  <div class="card">
+    <div class="note">Diet Phase 2 unlocks automatically in this tracker after 12 weeks — same chicken/egg foundation, with a bit more variety (fish, extra veg swaps) once your baseline habits are locked in.</div>
+  </div>
+</section>
+
+<!-- ============ PROGRESS VIEW ============ -->
+<section class="view" id="view-progress">
+  <div class="card">
+    <h2>Session History</h2>
+    <div id="historyList"><div class="empty">No workouts logged yet — complete one from the Workout tab.</div></div>
+  </div>
+</section>
+
+<!-- ============ TIPS VIEW ============ -->
+<section class="view" id="view-tips">
+  <div class="card">
+    <h2>Your Goal</h2>
+    <div class="journey">
+      <div class="step"><div class="kg">78kg</div><div class="lbl">Current</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="kg">Lean &amp; Toned</div><div class="lbl">Swimmer-body target</div></div>
+    </div>
+    <div class="note">Priority order: fat loss first (calorie deficit + cardio-strength hybrid training), muscle tone second (moderate weight, higher reps, short rest). This combo is what gives the lean, defined "swimmer" look rather than bulk.</div>
+  </div>
+  <div class="card">
+    <h2>Practical Tips</h2>
+    <h3>Hydration &amp; Sleep</h3>
+    <ul class="tiplist"><li>3–4L water daily, more on training days</li><li>7–8 hrs sleep — recovery drives fat loss as much as training does</li></ul>
+    <h3>What to Avoid</h3>
+    <ul class="tiplist"><li>Fried snacks, sugary drinks, refined flour (maida)</li><li>Alcohol — limit strictly, especially outside the Sunday allowance</li></ul>
+    <h3>A Note on the Deficit</h3>
+    <div class="note">1200–1500 kcal combined with 5 tough sessions/week is an aggressive plan. Re-check your weight and energy weekly — if you're feeling drained, dizzy, or performance is tanking, it's worth adding 150–200 kcal back in or speaking with a doctor/nutritionist. This app is a planning tool, not medical advice.</div>
+  </div>
+  <div class="card">
+    <h2>Install This App</h2>
+    <div class="note">A signed Android APK isn't something I could build in this environment (no Android SDK/build tools available here). This file works as a full mobile web app right now — open it in Chrome on your phone, then use Chrome's menu → "Add to Home screen" to get an app-style icon. If you want a real installable APK later, hosting this file (e.g. on Netlify/GitHub Pages) and running it through PWABuilder.com will generate one in a couple of minutes.</div>
+  </div>
+</section>
+
+</main>
+
+<!-- Questionnaire Modal -->
+<div class="modal-overlay" id="qModal">
+  <div class="modal">
+    <h2>How was that workout?</h2>
+    <div class="qgroup">
+      <label class="qlabel">Overall difficulty</label>
+      <div class="optrow" data-q="difficulty">
+        <button class="optbtn" data-v="Easy">Easy</button>
+        <button class="optbtn" data-v="Moderate">Moderate</button>
+        <button class="optbtn" data-v="Hard">Hard</button>
+        <button class="optbtn" data-v="Very Hard">Very Hard</button>
+      </div>
+    </div>
+    <div class="qgroup">
+      <label class="qlabel">Energy level going in</label>
+      <div class="optrow" data-q="energy">
+        <button class="optbtn" data-v="1">1</button>
+        <button class="optbtn" data-v="2">2</button>
+        <button class="optbtn" data-v="3">3</button>
+        <button class="optbtn" data-v="4">4</button>
+        <button class="optbtn" data-v="5">5</button>
+      </div>
+    </div>
+    <div class="qgroup">
+      <label class="qlabel">Any pain or discomfort?</label>
+      <div class="optrow" data-q="pain">
+        <button class="optbtn" data-v="None">None</button>
+        <button class="optbtn" data-v="Mild">Mild</button>
+        <button class="optbtn" data-v="Significant">Significant</button>
+      </div>
+    </div>
+    <div class="qgroup">
+      <label class="qlabel">Notes (optional)</label>
+      <textarea class="qtext" id="qNotes" placeholder="How did it feel, anything to adjust next time..."></textarea>
+    </div>
+    <button class="bigbtn" id="qSubmit">Save & Finish</button>
+    <button class="bigbtn secondary" id="qCancel">Cancel</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   ICONS: simple inline SVG glyphs by category (olive line-art)
+   ============================================================ */
+const ICONS = {
+  weight: '<svg viewBox="0 0 24 24"><rect x="1" y="9" width="4" height="6" rx="1"/><rect x="19" y="9" width="4" height="6" rx="1"/><rect x="5" y="10.3" width="14" height="3.4" rx="1"/></svg>',
+  legs:   '<svg viewBox="0 0 24 24"><circle cx="12" cy="4.2" r="2.2"/><path d="M12 7 L8 13 L9 21 M12 7 L16 13 L15 21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  core:   '<svg viewBox="0 0 24 24"><path d="M12 2c1 3-3 4-3 8a3 3 0 006 0c0-1.5-1-2-1-3.5 1.5 1 3 3 3 6a5 5 0 01-10 0c0-5 3-7 5-10.5z"/></svg>',
+  cardio: '<svg viewBox="0 0 24 24"><path d="M13 2 L4 14h6l-2 8 9-12h-6l2-8z"/></svg>'
+};
+const MUSCLE_ICON = { chest:'weight', back:'weight', shoulders:'weight', biceps:'weight', triceps:'weight', quads:'legs', hams:'legs', core:'core', fullbody:'cardio' };
+
+function ytSearch(q){ return 'https://www.youtube.com/results?search_query='+encodeURIComponent(q+' proper form tutorial'); }
+
+/* ============================================================
+   DATA: Alternate exercise pools by muscle group
+   (2 bodyweight/calisthenics + 2 weight-training options each)
+   ============================================================ */
+const ALT_POOL = {
+  chest:      [{n:"Push-Ups",t:"BW"},{n:"Incline Push-Ups",t:"BW"},{n:"DB Flat Bench Press",t:"WT"},{n:"DB Incline Press",t:"WT"}],
+  back:       [{n:"Superman Hold",t:"BW"},{n:"Inverted Rows",t:"BW"},{n:"DB Bent-Over Row",t:"WT"},{n:"Seated Cable Row",t:"WT"}],
+  shoulders:  [{n:"Pike Push-Ups",t:"BW"},{n:"Wall Handstand Hold",t:"BW"},{n:"DB Shoulder Press",t:"WT"},{n:"DB Lateral Raise",t:"WT"}],
+  biceps:     [{n:"Chin-Up Negatives",t:"BW"},{n:"Isometric Towel Curl",t:"BW"},{n:"DB Bicep Curl",t:"WT"},{n:"Barbell Curl",t:"WT"}],
+  triceps:    [{n:"Diamond Push-Ups",t:"BW"},{n:"Chair/Bench Dips",t:"BW"},{n:"DB Overhead Triceps Ext.",t:"WT"},{n:"Cable Triceps Pushdown",t:"WT"}],
+  quads:      [{n:"Bodyweight Squats",t:"BW"},{n:"Walking Lunges",t:"BW"},{n:"DB Goblet Squat",t:"WT"},{n:"Leg Press",t:"WT"}],
+  hams:       [{n:"Glute Bridge",t:"BW"},{n:"Single-Leg RDL (bodyweight)",t:"BW"},{n:"DB Romanian Deadlift",t:"WT"},{n:"Leg Curl Machine",t:"WT"}],
+  core:       [{n:"Plank",t:"BW"},{n:"Mountain Climbers",t:"BW"},{n:"Weighted Russian Twist",t:"WT"},{n:"Cable Crunch",t:"WT"}],
+  fullbody:   [{n:"Burpees",t:"BW"},{n:"Jumping Jacks",t:"BW"},{n:"Kettlebell Swings",t:"WT"},{n:"DB Thrusters",t:"WT"}]
+};
+
+const WARMUP = ["Jumping Jacks — 1 min","Arm Circles — 30s each direction","Bodyweight Squats — x15","Leg Swings — x10 per leg","Torso Twists — x20","High Knees — 30s"];
+const COOLDOWN = ["Chest Doorway Stretch — 30s","Child's Pose — 30s","Standing Hamstring Stretch — 30s each leg","Quad Stretch — 30s each leg","Shoulder Cross-Body Stretch — 20s each arm","Cat-Cow — x10","Deep Breathing — 1 min"];
+
+/* ============================================================
+   DATA: 3 Phases x 5 Days. Each day: exercises[] + finisher{}
+   ============================================================ */
+const PHASES = [
+{ id:1, label:"Phase 1", weeks:"Weeks 1–3", name:"Foundation", note:"Learn the movements, moderate pace, 30–45s rest between sets.",
+  days:[
+    {name:"Push + Core Sculpt", kcal:"600–650", exercises:[
+        {name:"DB Flat Bench Press", muscle:"chest", target:"3 × 10", rest:"45s"},
+        {name:"Pike Push-Ups", muscle:"shoulders", target:"3 × 10", rest:"45s"},
+        {name:"DB Lateral Raise", muscle:"shoulders", target:"3 × 15", rest:"30s"},
+        {name:"Chair/Bench Dips", muscle:"triceps", target:"3 × 12", rest:"30s"},
+        {name:"Plank", muscle:"core", target:"3 × 40s", rest:"20s"}],
+      finisher:{name:"Metabolic Finisher (3 rounds)", moves:["Jumping Jacks x30","Mountain Climbers x20","Burpees x8"]}},
+    {name:"Lower Body Sculpt", kcal:"650–700", exercises:[
+        {name:"DB Goblet Squat", muscle:"quads", target:"3 × 12", rest:"45s"},
+        {name:"Walking Lunges", muscle:"quads", target:"3 × 12/leg", rest:"30s"},
+        {name:"DB Romanian Deadlift", muscle:"hams", target:"3 × 10", rest:"45s"},
+        {name:"Glute Bridge", muscle:"hams", target:"3 × 15", rest:"20s"},
+        {name:"Mountain Climbers", muscle:"core", target:"3 × 20", rest:"20s"}],
+      finisher:{name:"Metabolic Finisher (3 rounds)", moves:["Jump Squats x12","Kettlebell Swings x15","High Knees 30s"]}},
+    {name:"Pull + Core Sculpt", kcal:"600–650", exercises:[
+        {name:"DB Bent-Over Row", muscle:"back", target:"3 × 10", rest:"45s"},
+        {name:"Inverted Rows", muscle:"back", target:"3 × 10", rest:"30s"},
+        {name:"DB Bicep Curl", muscle:"biceps", target:"3 × 12", rest:"30s"},
+        {name:"Chin-Up Negatives", muscle:"biceps", target:"3 × AMRAP", rest:"45s"},
+        {name:"Weighted Russian Twist", muscle:"core", target:"3 × 20", rest:"20s"}],
+      finisher:{name:"Metabolic Finisher (3 rounds)", moves:["Burpees x8","Jumping Jacks x30","Plank-to-Push-Up x10"]}},
+    {name:"Full-Body Calisthenics HIIT", kcal:"650–700", exercises:[
+        {name:"Jump Squats", muscle:"quads", target:"4 rounds × 40s work / 20s rest", rest:"20s"},
+        {name:"Push-Ups", muscle:"chest", target:"4 rounds × 40s work / 20s rest", rest:"20s"},
+        {name:"Mountain Climbers", muscle:"core", target:"4 rounds × 40s work / 20s rest", rest:"20s"},
+        {name:"Glute Bridge", muscle:"hams", target:"4 rounds × 40s work / 20s rest", rest:"20s"},
+        {name:"Burpees", muscle:"fullbody", target:"4 rounds × 40s work / 20s rest", rest:"20s"}],
+      finisher:null},
+    {name:"Lower + Full-Body Combo", kcal:"650–700", exercises:[
+        {name:"Leg Press", muscle:"quads", target:"3 × 12", rest:"45s"},
+        {name:"DB Thrusters", muscle:"fullbody", target:"3 × 12", rest:"45s"},
+        {name:"Single-Leg RDL (bodyweight)", muscle:"hams", target:"3 × 10/leg", rest:"30s"},
+        {name:"Kettlebell Swings", muscle:"fullbody", target:"3 × 15", rest:"30s"},
+        {name:"Plank", muscle:"core", target:"3 × 40s", rest:"20s"}],
+      finisher:{name:"Metabolic Finisher (3 rounds)", moves:["Burpees x10","Jump Squats x15","Mountain Climbers x20"]}}
+  ]},
+{ id:2, label:"Phase 2", weeks:"Weeks 4–6", name:"Intensify", note:"More volume, supersets, shorter rest (20–30s). Same muscles, fresh exercises + higher output.",
+  days:[
+    {name:"Push + Core Superset", kcal:"650–700", exercises:[
+        {name:"DB Incline Press", muscle:"chest", target:"4 × 10", rest:"30s"},
+        {name:"DB Shoulder Press", muscle:"shoulders", target:"3 × 10", rest:"30s"},
+        {name:"Diamond Push-Ups", muscle:"triceps", target:"4 × 12", rest:"30s"},
+        {name:"DB Lateral Raise", muscle:"shoulders", target:"3 × 15", rest:"20s"},
+        {name:"Weighted Russian Twist", muscle:"core", target:"3 × 20", rest:"20s"}],
+      finisher:{name:"Metabolic Finisher (4 rounds)", moves:["Burpees x10","Jump Squats x15","Mountain Climbers x25"]}},
+    {name:"Lower Body Intensify", kcal:"650–700", exercises:[
+        {name:"Leg Press", muscle:"quads", target:"4 × 12", rest:"30s"},
+        {name:"Walking Lunges", muscle:"quads", target:"3 × 14/leg", rest:"30s"},
+        {name:"Leg Curl Machine", muscle:"hams", target:"3 × 12", rest:"30s"},
+        {name:"Glute Bridge", muscle:"hams", target:"3 × 20", rest:"20s"},
+        {name:"Mountain Climbers", muscle:"core", target:"3 × 30", rest:"20s"}],
+      finisher:{name:"Metabolic Finisher (4 rounds)", moves:["Kettlebell Swings x15","Jump Squats x15","High Knees 40s"]}},
+    {name:"Pull + Core Intensify", kcal:"650–700", exercises:[
+        {name:"Seated Cable Row", muscle:"back", target:"4 × 10", rest:"30s"},
+        {name:"Inverted Rows", muscle:"back", target:"3 × AMRAP", rest:"30s"},
+        {name:"Barbell Curl", muscle:"biceps", target:"3 × 12", rest:"20s"},
+        {name:"Chin-Up Negatives", muscle:"biceps", target:"3 × AMRAP", rest:"45s"},
+        {name:"Cable Crunch", muscle:"core", target:"3 × 15", rest:"20s"}],
+      finisher:{name:"Metabolic Finisher (4 rounds)", moves:["Burpees x10","Jumping Jacks x40","Plank-to-Push-Up x12"]}},
+    {name:"Full-Body Calisthenics HIIT+", kcal:"650–700", exercises:[
+        {name:"Jump Squats", muscle:"quads", target:"5 rounds × 40s work / 15s rest", rest:"15s"},
+        {name:"Push-Ups", muscle:"chest", target:"5 rounds × 40s work / 15s rest", rest:"15s"},
+        {name:"Mountain Climbers", muscle:"core", target:"5 rounds × 40s work / 15s rest", rest:"15s"},
+        {name:"Glute Bridge", muscle:"hams", target:"5 rounds × 40s work / 15s rest", rest:"15s"},
+        {name:"Plank", muscle:"core", target:"5 rounds × 40s work / 15s rest", rest:"15s"},
+        {name:"Burpees", muscle:"fullbody", target:"5 rounds × 40s work / 15s rest", rest:"15s"},
+        {name:"Jumping Jacks", muscle:"fullbody", target:"5 rounds × 40s work / 15s rest", rest:"15s"}],
+      finisher:null},
+    {name:"Lower + Full-Body Intensify", kcal:"700", exercises:[
+        {name:"DB Goblet Squat", muscle:"quads", target:"4 × 12", rest:"30s"},
+        {name:"DB Thrusters", muscle:"fullbody", target:"4 × 12", rest:"30s"},
+        {name:"DB Romanian Deadlift", muscle:"hams", target:"3 × 12", rest:"30s"},
+        {name:"Kettlebell Swings", muscle:"fullbody", target:"3 × 18", rest:"20s"},
+        {name:"Weighted Russian Twist", muscle:"core", target:"3 × 20", rest:"20s"}],
+      finisher:{name:"Metabolic Finisher (4 rounds)", moves:["Burpees x12","Jump Squats x18","Mountain Climbers x25"]}}
+  ]},
+{ id:3, label:"Phase 3", weeks:"Weeks 7–9", name:"Shred / Peak", note:"Supersets back-to-back, minimal rest, AMRAP finishers. Highest calorie burn — carve phase.",
+  days:[
+    {name:"Push + Core Shred", kcal:"700+", exercises:[
+        {name:"DB Flat Bench Press → Push-Ups (superset)", muscle:"chest", target:"4×10 + AMRAP", rest:"45s after pair"},
+        {name:"DB Shoulder Press → Pike Push-Ups (superset)", muscle:"shoulders", target:"3×10 + AMRAP", rest:"45s after pair"},
+        {name:"Chair/Bench Dips → Diamond Push-Ups (superset)", muscle:"triceps", target:"3×15 + AMRAP", rest:"45s after pair"},
+        {name:"Plank", muscle:"core", target:"3 × 50s", rest:"20s"}],
+      finisher:{name:"Metabolic Finisher (5 rounds, 30s/10s)", moves:["Burpees","Jump Squats","Mountain Climbers","Jumping Jacks"]}},
+    {name:"Lower Body Shred", kcal:"700+", exercises:[
+        {name:"DB Goblet Squat → Jump Squats (superset)", muscle:"quads", target:"4×12 + AMRAP", rest:"45s after pair"},
+        {name:"DB Romanian Deadlift → Glute Bridge (superset)", muscle:"hams", target:"3×12 + AMRAP", rest:"45s after pair"},
+        {name:"Walking Lunges", muscle:"quads", target:"3 × 16/leg", rest:"30s"},
+        {name:"Weighted Russian Twist", muscle:"core", target:"3 × 25", rest:"20s"}],
+      finisher:{name:"Metabolic Finisher (5 rounds)", moves:["Kettlebell Swings x15","Jump Squats x15","High Knees 40s","Burpees x8"]}},
+    {name:"Pull + Core Shred", kcal:"700+", exercises:[
+        {name:"DB Bent-Over Row → Inverted Rows (superset)", muscle:"back", target:"4×10 + AMRAP", rest:"45s after pair"},
+        {name:"Barbell Curl → Chin-Up Negatives (superset)", muscle:"biceps", target:"3×12 + AMRAP", rest:"45s after pair"},
+        {name:"Cable Crunch", muscle:"core", target:"3 × 18", rest:"20s"}],
+      finisher:{name:"Metabolic Finisher (5 rounds)", moves:["Burpees","Jumping Jacks","Plank-to-Push-Up","Mountain Climbers"]}},
+    {name:"Full-Body Calisthenics HIIT Max", kcal:"700+", exercises:[
+        {name:"Jump Squats", muscle:"quads", target:"6 rounds × 35s/10s", rest:"10s"},
+        {name:"Push-Ups", muscle:"chest", target:"6 rounds × 35s/10s", rest:"10s"},
+        {name:"Mountain Climbers", muscle:"core", target:"6 rounds × 35s/10s", rest:"10s"},
+        {name:"Glute Bridge", muscle:"hams", target:"6 rounds × 35s/10s", rest:"10s"},
+        {name:"Plank", muscle:"core", target:"6 rounds × 35s/10s", rest:"10s"},
+        {name:"Burpees", muscle:"fullbody", target:"6 rounds × 35s/10s", rest:"10s"},
+        {name:"Jumping Jacks", muscle:"fullbody", target:"6 rounds × 35s/10s", rest:"10s"},
+        {name:"Diamond Push-Ups", muscle:"triceps", target:"6 rounds × 35s/10s", rest:"10s"}],
+      finisher:null},
+    {name:"Full-Body Strength-Conditioning Shred", kcal:"700+", exercises:[
+        {name:"DB Thrusters → Burpees (superset)", muscle:"fullbody", target:"4×12 + AMRAP", rest:"45s after pair"},
+        {name:"DB Goblet Squat → Jump Squats (superset)", muscle:"quads", target:"3×14 + AMRAP", rest:"45s after pair"},
+        {name:"Kettlebell Swings", muscle:"fullbody", target:"3 × 20", rest:"20s"},
+        {name:"Plank", muscle:"core", target:"3 × 50s", rest:"20s"}],
+      finisher:{name:"Metabolic Finisher (5 rounds)", moves:["Mountain Climbers","Jump Squats","Burpees","Jumping Jacks"]}}
+  ]}
+];
+
+/* ============================================================
+   DATA: Diet — Indian, chicken/egg based
+   ============================================================ */
+const DIET = {
+  weekday: {
+    blurb: "Consistent daily plan for the first 12 weeks — 1200–1500 kcal, chicken & eggs as the main protein.",
+    meals: [
+      { name:"Breakfast", time:"~8:00 AM", items:"2 whole eggs + 1 egg white bhurji with onion, tomato & capsicum · black coffee/green tea",
+        p:20,c:8,f:14,k:230,
+        alts:["2 whole eggs + 1 egg white bhurji with onion, tomato & capsicum · black coffee/green tea (~230 kcal)","Boiled eggs (2 whole + 2 white) + cucumber sticks (~210 kcal)","Egg white omelette (4 whites) + 1 multigrain toast (~220 kcal)","Low-fat curd (200g) with chia seeds & cinnamon (~200 kcal)"]},
+      { name:"Lunch", time:"~1:00 PM", items:"Grilled chicken breast (120g) + large mixed salad (cucumber, tomato, lettuce, lemon) + 1 small roti",
+        p:38,c:28,f:10,k:380,
+        alts:["Grilled chicken breast (120g) + salad + 1 small roti (~380 kcal)","Tandoori chicken tikka (120g, no cream) + salad (~360 kcal)","Egg curry (2 eggs) + 1 roti (~400 kcal)","Boiled shredded chicken clear soup + steamed veg (~320 kcal)"]},
+      { name:"Evening Snack", time:"~5:00 PM", items:"1 boiled egg + cucumber & carrot sticks",
+        p:10,c:6,f:6,k:130,
+        alts:["1 boiled egg + cucumber & carrot sticks (~130 kcal)","Small handful roasted chana (~140 kcal)","Buttermilk / chaas, unsweetened (~90 kcal)","Roasted makhana handful (~120 kcal)"]},
+      { name:"Dinner", time:"~8:30 PM", items:"Grilled chicken (100–120g) or egg white bhurji + sautéed vegetables, no rice/roti",
+        p:32,c:14,f:12,k:340,
+        alts:["Grilled chicken (100–120g) + sautéed vegetables (~340 kcal)","Egg white curry (4 whites) + vegetables (~300 kcal)","Chicken stir-fry, minimal oil, mixed veg (~350 kcal)","Grilled chicken salad, lemon-olive oil dressing (~320 kcal)"]}
+    ],
+    totals:{p:100,c:56,f:42,k:1080}
+  },
+  sunday: {
+    blurb: "Weekly cheat day — still capped under 1800 kcal. Enjoy one indulgent meal, keep the rest lighter.",
+    meals: [
+      { name:"Breakfast", time:"~8:30 AM", items:"2 whole eggs + 1 egg white bhurji + 1 extra multigrain toast",
+        p:22,c:22,f:14,k:300,
+        alts:["2 whole eggs + 1 egg white bhurji + 1 extra toast (~300 kcal)","Masala omelette (2 eggs) + toast (~300 kcal)","Stuffed paneer paratha, small, with curd (~340 kcal)"]},
+      { name:"Lunch — Cheat Meal", time:"~1:30 PM", items:"Chicken biryani (1.5 cup) + raita",
+        p:32,c:75,f:18,k:600,
+        alts:["Chicken biryani (1.5 cup) + raita (~600 kcal)","Butter chicken (small bowl) + 1 roti (~620 kcal)","Chicken shawarma roll (~550 kcal)","2 slices regular-crust chicken pizza (~580 kcal)"]},
+      { name:"Evening Treat", time:"~5:00 PM", items:"2 pcs gulab jamun or 1 small brownie, with chai",
+        p:4,c:35,f:10,k:250,
+        alts:["2 pcs gulab jamun + chai (~250 kcal)","1 small brownie + chai (~260 kcal)","1 small cup kulfi (~220 kcal)"]},
+      { name:"Dinner", time:"~8:30 PM", items:"Grilled chicken + 1–2 roti + sabzi (slightly relaxed portions)",
+        p:36,c:38,f:16,k:480,
+        alts:["Grilled chicken + 1–2 roti + sabzi (~480 kcal)","Chicken curry + rice, moderate portion (~500 kcal)","Egg curry + 2 roti (~460 kcal)"]}
+    ],
+    totals:{p:94,c:170,f:58,k:1630}
+  }
+};
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let state = JSON.parse(localStorage.getItem('fitnessden_state')||localStorage.getItem('swimshred_state')||'null') || {
+  phase:1, day:0, warmup:[], cooldown:[], swaps:{}, logs:{}, history:[]
+};
+function saveState(){ localStorage.setItem('fitnessden_state', JSON.stringify(state)); }
+
+function resetSessionProgress(){
+  state.warmup = new Array(WARMUP.length).fill(false);
+  state.cooldown = new Array(COOLDOWN.length).fill(false);
+  state.logs = {};
+  saveState();
+}
+if(!state.warmup || state.warmup.length!==WARMUP.length) resetSessionProgress();
+
+/* ============================================================
+   RENDER: Workout tab
+   ============================================================ */
+function renderPhasePills(){
+  const el = document.getElementById('phasePills');
+  el.innerHTML='';
+  PHASES.forEach(p=>{
+    const b=document.createElement('button');
+    b.className='pill'+(state.phase===p.id?' active':'');
+    b.textContent=p.label+' · '+p.weeks;
+    b.onclick=()=>{ state.phase=p.id; saveState(); renderAll(); };
+    el.appendChild(b);
+  });
+  const cur = PHASES.find(p=>p.id===state.phase);
+  document.getElementById('phaseNote').textContent = cur.name+' — '+cur.note;
+}
+
+function renderDayPills(){
+  const el = document.getElementById('dayPills');
+  el.innerHTML='';
+  const cur = PHASES.find(p=>p.id===state.phase);
+  cur.days.forEach((d,i)=>{
+    const b=document.createElement('button');
+    b.className='pill'+(state.day===i?' active':'');
+    b.textContent='Day '+(i+1);
+    b.onclick=()=>{ state.day=i; resetSessionProgress(); saveState(); renderAll(); };
+    el.appendChild(b);
+  });
+}
+
+function getSwap(exIdx){
+  const key = state.phase+'-'+state.day+'-'+exIdx;
+  return state.swaps[key];
+}
+function setSwap(exIdx, val){
+  const key = state.phase+'-'+state.day+'-'+exIdx;
+  state.swaps[key]=val; saveState();
+}
+
+function renderWarmupCooldown(){
+  const wEl = document.getElementById('warmupList'); wEl.innerHTML='';
+  WARMUP.forEach((w,i)=>{
+    const li=document.createElement('li'); if(state.warmup[i]) li.classList.add('done');
+    const chk=document.createElement('div'); chk.className='chk'+(state.warmup[i]?' on':''); chk.textContent=state.warmup[i]?'✓':'';
+    chk.onclick=()=>{ state.warmup[i]=!state.warmup[i]; saveState(); renderWarmupCooldown(); updateCompleteBtn(); };
+    li.appendChild(chk); li.appendChild(document.createTextNode(w)); wEl.appendChild(li);
+  });
+  const cEl = document.getElementById('cooldownList'); cEl.innerHTML='';
+  COOLDOWN.forEach((w,i)=>{
+    const li=document.createElement('li'); if(state.cooldown[i]) li.classList.add('done');
+    const chk=document.createElement('div'); chk.className='chk'+(state.cooldown[i]?' on':''); chk.textContent=state.cooldown[i]?'✓':'';
+    chk.onclick=()=>{ state.cooldown[i]=!state.cooldown[i]; saveState(); renderWarmupCooldown(); updateCompleteBtn(); };
+    li.appendChild(chk); li.appendChild(document.createTextNode(w)); cEl.appendChild(li);
+  });
+}
+
+function renderExercises(){
+  const cur = PHASES.find(p=>p.id===state.phase);
+  const day = cur.days[state.day];
+  document.getElementById('dayTitle').textContent = 'Day '+(state.day+1)+' — '+day.name;
+  document.getElementById('kcalNote').textContent = 'Target burn: ~'+day.kcal+' active kcal (estimate — varies by effort & body composition)';
+
+  const totalItems = day.exercises.length + (day.finisher?1:0);
+
+  const list = document.getElementById('exerciseList'); list.innerHTML='';
+  day.exercises.forEach((ex,i)=>{
+    const key='ex'+i;
+    const swapVal = getSwap(i);
+    const displayName = swapVal || ex.name;
+    const done = state.logs[key] && state.logs[key].done;
+    const iconKey = MUSCLE_ICON[ex.muscle] || 'weight';
+
+    const card=document.createElement('div'); card.className='ex-card'+(done?' done':'');
+    const top=document.createElement('div'); top.className='ex-top';
+    const left=document.createElement('div'); left.className='ex-left';
+    const icBadge=document.createElement('div'); icBadge.className='ic-badge'; icBadge.innerHTML=ICONS[iconKey];
+    const info=document.createElement('div');
+    const nm=document.createElement('div'); nm.className='ex-name'; nm.textContent=displayName;
+    const tg=document.createElement('div'); tg.className='ex-target'; tg.textContent=ex.target+' · rest '+ex.rest;
+    const vid=document.createElement('a'); vid.className='ex-video'; vid.target='_blank'; vid.rel='noopener';
+    vid.href=ytSearch(displayName); vid.textContent='🎥 Watch form video';
+    info.appendChild(nm); info.appendChild(tg); info.appendChild(vid);
+    left.appendChild(icBadge); left.appendChild(info);
+    top.appendChild(left);
+
+    if(ALT_POOL[ex.muscle]){
+      const sel=document.createElement('select'); sel.className='swap-select';
+      const optDefault=document.createElement('option'); optDefault.value=''; optDefault.textContent='Default: '+ex.name;
+      sel.appendChild(optDefault);
+      ALT_POOL[ex.muscle].forEach(alt=>{
+        const o=document.createElement('option'); o.value=alt.n; o.textContent=alt.n+' ('+alt.t+')';
+        if(swapVal===alt.n) o.selected=true;
+        sel.appendChild(o);
+      });
+      sel.onchange=()=>{ setSwap(i, sel.value); renderExercises(); };
+      top.appendChild(sel);
+    }
+    card.appendChild(top);
+
+    if(!done){
+      const row=document.createElement('div'); row.className='log-row';
+      row.innerHTML = '<label>Weight(kg)<br><input type="number" min="0" step="0.5" id="w-'+key+'"></label>'+
+                      '<label>Reps<br><input type="number" min="0" step="1" id="r-'+key+'"></label>';
+      const btn=document.createElement('button'); btn.className='logbtn'; btn.textContent='✓ Log & Complete';
+      btn.onclick=()=>{
+        const w=document.getElementById('w-'+key).value||'BW';
+        const r=document.getElementById('r-'+key).value||'-';
+        state.logs[key]={done:true, name:displayName, weight:w, reps:r};
+        saveState(); renderExercises(); updateCompleteBtn();
+      };
+      row.appendChild(btn);
+      card.appendChild(row);
+    } else {
+      const tag=document.createElement('div'); tag.className='logged-tag';
+      tag.textContent='✓ Logged — '+state.logs[key].weight+'kg × '+state.logs[key].reps+' reps';
+      card.appendChild(tag);
+    }
+    list.appendChild(card);
+  });
+
+  const fEl = document.getElementById('finisherBlock'); fEl.innerHTML='';
+  if(day.finisher){
+    const key='finisher';
+    const done = state.logs[key] && state.logs[key].done;
+    const card=document.createElement('div'); card.className='ex-card'+(done?' done':'');
+    const top=document.createElement('div'); top.className='ex-top';
+    const left=document.createElement('div'); left.className='ex-left';
+    const icBadge=document.createElement('div'); icBadge.className='ic-badge'; icBadge.innerHTML=ICONS.cardio;
+    const info=document.createElement('div');
+    const nm=document.createElement('div'); nm.className='ex-name'; nm.textContent='🔥 '+day.finisher.name;
+    const tg=document.createElement('div'); tg.className='ex-target'; tg.textContent=day.finisher.moves.join(' · ');
+    const vid=document.createElement('a'); vid.className='ex-video'; vid.target='_blank'; vid.rel='noopener';
+    vid.href=ytSearch(day.finisher.moves[0]); vid.textContent='🎥 Watch form video';
+    info.appendChild(nm); info.appendChild(tg); info.appendChild(vid);
+    left.appendChild(icBadge); left.appendChild(info);
+    top.appendChild(left);
+    card.appendChild(top);
+    if(!done){
+      const btn=document.createElement('button'); btn.className='logbtn'; btn.style.marginTop='10px'; btn.textContent='✓ Mark Finisher Complete';
+      btn.onclick=()=>{ state.logs[key]={done:true}; saveState(); renderExercises(); updateCompleteBtn(); };
+      card.appendChild(btn);
+    } else {
+      const tag=document.createElement('div'); tag.className='logged-tag'; tag.textContent='✓ Finisher complete';
+      card.appendChild(tag);
+    }
+    fEl.appendChild(card);
+  }
+
+  // progress bar
+  let doneCount=0;
+  day.exercises.forEach((ex,i)=>{ if(state.logs['ex'+i] && state.logs['ex'+i].done) doneCount++; });
+  if(day.finisher && state.logs['finisher'] && state.logs['finisher'].done) doneCount++;
+  document.getElementById('progText').textContent = doneCount+' / '+totalItems+' exercises logged';
+  document.getElementById('progBar').style.width = Math.round((doneCount/totalItems)*100)+'%';
+
+  updateCompleteBtn();
+}
+
+function allExercisesDone(){
+  const cur = PHASES.find(p=>p.id===state.phase);
+  const day = cur.days[state.day];
+  for(let i=0;i<day.exercises.length;i++){ if(!state.logs['ex'+i] || !state.logs['ex'+i].done) return false; }
+  if(day.finisher && (!state.logs['finisher']||!state.logs['finisher'].done)) return false;
+  return true;
+}
+function allWarmupDone(){ return state.warmup.every(x=>x); }
+function allCooldownDone(){ return state.cooldown.every(x=>x); }
+
+function updateCompleteBtn(){
+  const btn = document.getElementById('completeBtn');
+  const ready = allWarmupDone() && allExercisesDone() && allCooldownDone();
+  btn.disabled = !ready;
+  document.getElementById('completeHint').style.display = ready ? 'none':'block';
+}
+
+function renderAll(){
+  renderPhasePills(); renderDayPills(); renderWarmupCooldown(); renderExercises();
+}
+
+document.getElementById('completeBtn').onclick=()=>{
+  document.getElementById('qModal').classList.add('open');
+};
+
+/* Questionnaire */
+let qAnswers={difficulty:null,energy:null,pain:null};
+document.querySelectorAll('.optrow').forEach(row=>{
+  row.querySelectorAll('.optbtn').forEach(btn=>{
+    btn.onclick=()=>{
+      row.querySelectorAll('.optbtn').forEach(b=>b.classList.remove('sel'));
+      btn.classList.add('sel');
+      qAnswers[row.dataset.q]=btn.dataset.v;
+    };
+  });
+});
+document.getElementById('qCancel').onclick=()=>{ document.getElementById('qModal').classList.remove('open'); };
+document.getElementById('qSubmit').onclick=()=>{
+  const cur = PHASES.find(p=>p.id===state.phase);
+  const day = cur.days[state.day];
+  const session = {
+    date:new Date().toLocaleString(),
+    phase:cur.label, day:'Day '+(state.day+1)+' — '+day.name,
+    difficulty:qAnswers.difficulty||'—', energy:qAnswers.energy||'—', pain:qAnswers.pain||'—',
+    notes:document.getElementById('qNotes').value||''
+  };
+  state.history.unshift(session);
+  saveState();
+  document.getElementById('qModal').classList.remove('open');
+  document.getElementById('qNotes').value='';
+  qAnswers={difficulty:null,energy:null,pain:null};
+  document.querySelectorAll('.optbtn').forEach(b=>b.classList.remove('sel'));
+  resetSessionProgress();
+  renderAll(); renderHistory();
+  showToast('Workout logged! Great job 💪');
+};
+
+function showToast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block';
+  setTimeout(()=>{ t.style.display='none'; }, 2500);
+}
+
+/* ============================================================
+   RENDER: Progress tab
+   ============================================================ */
+function renderHistory(){
+  const el = document.getElementById('historyList');
+  if(!state.history.length){ el.innerHTML='<div class="empty">No workouts logged yet — complete one from the Workout tab.</div>'; return; }
+  el.innerHTML='';
+  state.history.forEach(s=>{
+    const d=document.createElement('div'); d.className='session';
+    d.innerHTML = '<div class="srow1"><span>'+s.day+'</span><span>'+s.phase+'</span></div>'+
+                  '<div class="srow2">'+s.date+' · Difficulty: '+s.difficulty+' · Energy: '+s.energy+'/5 · Pain: '+s.pain+'</div>'+
+                  (s.notes?'<div class="srow2">"'+s.notes+'"</div>':'');
+    el.appendChild(d);
+  });
+}
+
+/* ============================================================
+   RENDER: Diet tab
+   ============================================================ */
+function mealEmoji(name){
+  const n=name.toLowerCase();
+  if(n.includes('breakfast')) return '🌅';
+  if(n.includes('cheat')) return '😋';
+  if(n.includes('lunch')) return '🍛';
+  if(n.includes('treat')) return '🍮';
+  if(n.includes('snack')) return '🍎';
+  if(n.includes('dinner')) return '🌙';
+  return '🍽️';
+}
+let currentDiet='weekday';
+function renderDiet(){
+  const plan = DIET[currentDiet];
+  document.getElementById('dietBlurb').textContent = plan.blurb;
+  const el = document.getElementById('mealContainer'); el.innerHTML='';
+  plan.meals.forEach((m,i)=>{
+    const key=currentDiet+'-'+i;
+    const chosenIdx = state.swaps['diet-'+key];
+    const div=document.createElement('div'); div.className='meal';
+    const head=document.createElement('div'); head.className='meal-head';
+    head.innerHTML='<span class="meal-name">'+mealEmoji(m.name)+' '+m.name+'</span><span class="meal-time">'+m.time+'</span>';
+    div.appendChild(head);
+    const items=document.createElement('div'); items.className='meal-items';
+    items.textContent = chosenIdx!==undefined ? m.alts[chosenIdx] : m.items;
+    div.appendChild(items);
+    const badges=document.createElement('div'); badges.className='badges';
+    badges.innerHTML='<span class="badge b-p">P '+m.p+'g</span><span class="badge b-c">C '+m.c+'g</span><span class="badge b-f">F '+m.f+'g</span><span class="badge b-k">'+m.k+' kcal</span>';
+    div.appendChild(badges);
+    const sel=document.createElement('select'); sel.className='swap-meal';
+    const optD=document.createElement('option'); optD.value=''; optD.textContent='Swap this meal...';
+    sel.appendChild(optD);
+    m.alts.forEach((a,ai)=>{
+      const o=document.createElement('option'); o.value=ai; o.textContent=a;
+      if(chosenIdx==ai) o.selected=true;
+      sel.appendChild(o);
+    });
+    sel.onchange=()=>{
+      if(sel.value===''){ delete state.swaps['diet-'+key]; } else { state.swaps['diet-'+key]=sel.value; }
+      saveState(); renderDiet();
+    };
+    div.appendChild(sel);
+    el.appendChild(div);
+  });
+  const t=plan.totals;
+  const totalsDiv=document.createElement('div'); totalsDiv.className='totals';
+  totalsDiv.innerHTML='<div class="t"><div class="n">'+t.p+'g</div><div class="l">Protein</div></div>'+
+                       '<div class="t"><div class="n">'+t.c+'g</div><div class="l">Carbs</div></div>'+
+                       '<div class="t"><div class="n">'+t.f+'g</div><div class="l">Fat</div></div>'+
+                       '<div class="t"><div class="n">~'+t.k+'</div><div class="l">Kcal</div></div>';
+  el.appendChild(totalsDiv);
+}
+
+document.querySelectorAll('[data-diet]').forEach(btn=>{
+  btn.onclick=()=>{
+    document.querySelectorAll('[data-diet]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    currentDiet = btn.dataset.diet;
+    renderDiet();
+  };
+});
+
+/* ============================================================
+   Tab navigation
+   ============================================================ */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.onclick=()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('view-'+btn.dataset.view).classList.add('active');
+  };
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+renderAll();
+renderHistory();
+renderDiet();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>

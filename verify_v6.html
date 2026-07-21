@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>TheFitnessDen — Workout & Diet Tracker</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#5C6E28">
+<style>
+  :root{
+    --bg:#FFFFFF; --panel:#FAFBF5; --panel2:#F0F3E6; --border:#E1E6D3;
+    --text:#2E3324; --muted:#767F67;
+    --olive:#5C6E28; --olive-dark:#42501D; --olive-light:#8CA35A; --olive-pale:#E7EEDA;
+    --carb:#B98B3E; --fat:#A5673A; --red:#B3453D; --white:#FFFFFF; --gold:#C9971C;
+    --radius:16px;
+    --shadow:0 2px 10px rgba(92,110,40,0.08);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:20px;}
+
+  header{padding:20px 16px 12px;max-width:900px;margin:0 auto;background:var(--white);}
+  .brandrow{display:flex;align-items:center;gap:12px;}
+  .logo-badge{width:46px;height:46px;flex:none;border-radius:14px;background:var(--olive);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);}
+  .logo-badge svg{width:26px;height:26px;}
+  h1{font-size:1.35rem;margin:0;color:var(--olive-dark);letter-spacing:-.01em;}
+  h1 span{color:var(--olive-light);}
+  .sub{color:var(--muted);font-size:0.85rem;margin-top:2px;}
+
+  .herostrip{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+  .herochip{background:var(--olive-pale);color:var(--olive-dark);font-size:0.72rem;font-weight:700;padding:6px 12px;border-radius:20px;}
+
+  nav.tabs{display:flex;gap:5px;max-width:900px;margin:0 auto;padding:10px 10px 12px;position:sticky;top:0;background:var(--white);z-index:20;box-shadow:0 2px 8px rgba(0,0,0,0.04);overflow-x:auto;}
+  nav.tabs button{flex:1;background:var(--panel2);border:1px solid var(--border);color:var(--muted);padding:10px 3px;border-radius:12px;font-size:0.74rem;font-weight:700;cursor:pointer;white-space:nowrap;}
+  nav.tabs button.active{background:var(--olive);color:var(--white);border-color:var(--olive);}
+
+  main{max-width:900px;margin:0 auto;padding:6px 16px 60px;}
+  .view{display:none;} .view.active{display:block;}
+
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px;box-shadow:var(--shadow);}
+  .card h2{margin:0 0 10px;font-size:1.05rem;color:var(--olive-dark);}
+  .card h3{margin:14px 0 8px;font-size:0.82rem;color:var(--olive);font-weight:800;text-transform:uppercase;letter-spacing:.05em;}
+  .card h3:first-child{margin-top:0;}
+  .note{color:var(--muted);font-size:0.83rem;background:var(--olive-pale);border-left:3px solid var(--olive);padding:9px 11px;border-radius:8px;margin-top:8px;}
+  .banner{color:var(--olive-dark);font-size:0.87rem;background:#FBF0DA;border:1px solid #E9CE8F;border-left:4px solid var(--gold);padding:12px 14px;border-radius:10px;margin-bottom:14px;font-weight:600;}
+  .banner .bbtn{display:inline-block;margin-top:8px;background:var(--olive);color:var(--white);border:none;border-radius:8px;padding:8px 14px;font-size:0.78rem;font-weight:700;cursor:pointer;}
+  .pillrow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+  .pill{background:var(--panel2);border:1px solid var(--border);color:var(--muted);padding:7px 13px;border-radius:20px;font-size:0.78rem;font-weight:700;cursor:pointer;}
+  .pill.active{background:var(--olive);color:var(--white);border-color:var(--olive);}
+
+  /* checklist (warmup/cooldown) */
+  ul.check{list-style:none;margin:0;padding:0;}
+  ul.check li{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--border);font-size:0.87rem;}
+  ul.check li:last-child{border-bottom:none;}
+  ul.check li.done{color:var(--muted);text-decoration:line-through;}
+  .chk{width:22px;height:22px;flex:none;border:2px solid var(--border);border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.75rem;background:var(--white);}
+  .chk.on{background:var(--olive);border-color:var(--olive);color:var(--white);}
+
+  /* progress bar */
+  .progwrap{background:var(--panel2);border-radius:20px;height:10px;overflow:hidden;margin-bottom:12px;}
+  .progbar{background:var(--olive);height:100%;border-radius:20px;transition:width .3s;}
+  .progtext{font-size:0.75rem;color:var(--muted);font-weight:700;margin-bottom:6px;}
+
+  /* calendar strip */
+  .calwrap{display:flex;align-items:center;gap:4px;margin-bottom:10px;}
+  .calnav{background:var(--panel2);border:1px solid var(--border);color:var(--olive-dark);width:32px;height:32px;border-radius:10px;font-weight:800;cursor:pointer;flex:none;}
+  .calstrip{display:flex;gap:5px;flex:1;overflow-x:auto;}
+  .calday{flex:1;min-width:42px;text-align:center;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:6px 2px;cursor:pointer;}
+  .calday .dow{font-size:0.62rem;color:var(--muted);font-weight:700;text-transform:uppercase;}
+  .calday .dn{font-size:0.95rem;font-weight:800;color:var(--text);margin:2px 0;}
+  .calday .tag{font-size:0.55rem;color:var(--olive);font-weight:700;}
+  .calday.today{border-color:var(--olive-light);}
+  .calday.selected{background:var(--olive);border-color:var(--olive);}
+  .calday.selected .dow, .calday.selected .dn, .calday.selected .tag{color:var(--white);}
+  .calday.rest .tag{color:var(--carb);}
+
+  /* exercise card */
+  .ex-card{background:var(--white);border:1px solid var(--border);border-left:4px solid var(--olive-light);border-radius:12px;padding:12px;margin-bottom:10px;}
+  .ex-card.done{opacity:0.5;border-left-color:var(--border);}
+  .ex-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+  .ex-left{display:flex;gap:10px;align-items:flex-start;}
+  .ic-badge{width:34px;height:34px;flex:none;border-radius:10px;background:var(--olive-pale);color:var(--olive);display:flex;align-items:center;justify-content:center;}
+  .ic-badge svg{width:18px;height:18px;fill:var(--olive);}
+  .ex-name{font-weight:700;font-size:0.92rem;color:var(--text);}
+  .ex-target{color:var(--muted);font-size:0.78rem;margin-top:2px;}
+  .ex-video{display:inline-block;margin-top:4px;font-size:0.75rem;color:var(--olive);font-weight:700;text-decoration:none;}
+  .ex-video:hover{text-decoration:underline;}
+  .last-time{font-size:0.75rem;color:var(--carb);font-weight:700;margin-top:2px;}
+  .coach-note{background:var(--olive-pale);border:1px solid var(--olive-light);border-left:4px solid var(--olive);border-radius:8px;padding:10px 12px;font-size:0.85rem;color:var(--olive-dark);margin-bottom:10px;font-weight:600;}
+  .swap-select{background:var(--white);border:1px solid var(--border);color:var(--text);font-size:0.72rem;border-radius:8px;padding:4px 6px;max-width:150px;}
+  .set-row{display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap;background:var(--panel2);border-radius:8px;padding:6px 8px;}
+  .set-row .setlbl{font-size:0.7rem;color:var(--muted);font-weight:700;min-width:42px;}
+  .set-row input{width:64px;background:var(--white);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 8px;font-size:0.85rem;}
+  .set-row label{font-size:0.68rem;color:var(--muted);}
+  .logbtn{background:var(--olive);color:var(--white);border:none;border-radius:8px;padding:8px 14px;font-size:0.78rem;font-weight:700;cursor:pointer;margin-top:8px;}
+  .logged-tag{font-size:0.75rem;color:var(--olive);font-weight:700;margin-top:8px;}
+  .startbtn, .bigbtn{width:100%;background:var(--olive);color:var(--white);border:none;border-radius:12px;padding:14px;font-size:0.95rem;font-weight:800;cursor:pointer;margin-top:6px;box-shadow:var(--shadow);}
+  .bigbtn:disabled{background:var(--panel2);color:var(--muted);cursor:not-allowed;box-shadow:none;}
+  .bigbtn.secondary{background:var(--white);color:var(--text);border:1px solid var(--border);box-shadow:none;}
+  .bigbtn.stop{background:var(--red);}
+
+  /* modal */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(46,51,36,.5);z-index:100;align-items:center;justify-content:center;padding:20px;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--white);border:1px solid var(--border);border-radius:18px;padding:20px;max-width:420px;width:100%;max-height:85vh;overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,0.2);}
+  .modal h2{margin-top:0;font-size:1.05rem;color:var(--olive-dark);}
+  .qgroup{margin-bottom:16px;}
+  .qgroup label.qlabel{display:block;font-size:0.85rem;font-weight:700;margin-bottom:8px;color:var(--text);}
+  .optrow{display:flex;gap:6px;flex-wrap:wrap;}
+  .optbtn{background:var(--panel2);border:1px solid var(--border);color:var(--muted);padding:7px 12px;border-radius:10px;font-size:0.78rem;cursor:pointer;}
+  .optbtn.sel{background:var(--olive);color:var(--white);border-color:var(--olive);}
+  textarea.qtext{width:100%;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px;font-size:0.85rem;resize:vertical;min-height:50px;}
+
+  /* diet */
+  .meal{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;box-shadow:var(--shadow);}
+  .meal-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;flex-wrap:wrap;gap:6px;}
+  .meal-name{font-weight:700;font-size:0.95rem;color:var(--olive-dark);}
+  .meal-time{color:var(--muted);font-size:0.75rem;}
+  .meal-items{color:var(--text);font-size:0.87rem;line-height:1.5;margin-bottom:8px;}
+  .badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+  .badge{font-size:0.7rem;font-weight:700;padding:3px 9px;border-radius:12px;background:var(--panel2);border:1px solid var(--border);}
+  .b-p{color:var(--olive);} .b-c{color:var(--carb);} .b-f{color:var(--fat);} .b-k{color:var(--olive-dark);}
+  select.swap-meal{width:100%;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px;font-size:0.82rem;}
+  .totals{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;background:var(--olive-pale);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-top:6px;}
+  .totals .t{text-align:center;} .totals .t .n{font-size:1.1rem;font-weight:800;color:var(--olive-dark);} .totals .t .l{font-size:0.68rem;color:var(--muted);text-transform:uppercase;}
+
+  /* progress tab */
+  .session{background:var(--white);border:1px solid var(--border);border-left:4px solid var(--olive);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:0.85rem;box-shadow:var(--shadow);}
+  .session .srow1{display:flex;justify-content:space-between;font-weight:700;color:var(--olive-dark);}
+  .session .srow2{color:var(--muted);font-size:0.78rem;margin-top:2px;}
+  .empty{color:var(--muted);font-size:0.85rem;text-align:center;padding:20px 0;}
+
+  .journey{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+  .journey .step{background:var(--olive-pale);border:1px solid var(--border);border-radius:10px;padding:10px 14px;text-align:center;}
+  .journey .step .kg{font-size:1.15rem;font-weight:800;color:var(--olive-dark);} .journey .step .lbl{font-size:0.68rem;color:var(--muted);}
+  .journey .arrow{color:var(--olive-light);font-size:1.2rem;}
+  ul.tiplist{margin:0;padding-left:18px;font-size:0.87rem;line-height:1.7;}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--olive);color:var(--white);font-weight:700;padding:10px 20px;border-radius:20px;font-size:0.85rem;z-index:200;display:none;box-shadow:0 4px 16px rgba(0,0,0,0.25);}
+
+  /* badges (achievement chips) */
+  .badgechip{display:inline-flex;align-items:center;gap:8px;background:var(--white);border:1px solid var(--border);border-radius:14px;padding:10px 12px;margin:0 8px 8px 0;box-shadow:var(--shadow);}
+  .badgechip .emoji{font-size:1.4rem;}
+  .badgechip .bwrap .btitle{font-weight:800;font-size:0.8rem;color:var(--olive-dark);}
+  .badgechip .bwrap .bsub{font-size:0.68rem;color:var(--muted);}
+
+  /* check-in */
+  .checkin-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+  .checkin-slot{background:var(--white);border:2px dashed var(--border);border-radius:12px;padding:10px;text-align:center;}
+  .checkin-slot label{font-size:0.72rem;font-weight:700;color:var(--olive-dark);display:block;margin-bottom:6px;}
+  .checkin-slot img{width:100%;border-radius:8px;max-height:140px;object-fit:cover;display:block;margin-bottom:6px;}
+  .checkin-slot input[type=file]{font-size:0.7rem;width:100%;}
+  .checkin-history-row{display:flex;gap:6px;margin-bottom:10px;}
+  .checkin-thumb{width:52px;height:52px;border-radius:8px;object-fit:cover;border:1px solid var(--border);}
+
+  /* home / landing */
+  .hero-card{background:linear-gradient(135deg, var(--olive) 0%, var(--olive-dark) 100%);border-radius:20px;padding:24px 20px;color:var(--white);box-shadow:var(--shadow);margin-bottom:14px;}
+  .hero-card h2{color:var(--white);margin:0 0 4px;font-size:1.2rem;}
+  .hero-card .hsub{color:#DCE6C9;font-size:0.85rem;margin-bottom:14px;}
+  .hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .hero-stats .hs{background:rgba(255,255,255,0.12);border-radius:10px;padding:8px;text-align:center;}
+  .hero-stats .hs .n{font-size:1.05rem;font-weight:800;}
+  .hero-stats .hs .l{font-size:0.62rem;color:#DCE6C9;text-transform:uppercase;}
+  .cta{display:block;width:100%;background:var(--white);color:var(--olive-dark);border:none;border-radius:12px;padding:14px;font-size:0.92rem;font-weight:800;cursor:pointer;margin-top:16px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brandrow">
+    <div class="logo-badge">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#FFFFFF" d="M12 3c1.2 0 1.4 1.5.7 2.5-.6.9-1.6 1-1.6 2a1.4 1.4 0 002.8 0c0-.5-.4-.8-.4-1.3.8.5 1.4 1.4 1.4 2.5a2.4 2.4 0 01-4.8 0c0-2.4 1.4-3.4 1.9-5.7z"/>
+        <circle cx="12" cy="12" r="10.2" fill="none" stroke="#FFFFFF" stroke-width="1.4"/>
+      </svg>
+    </div>
+    <div>
+      <h1>The<span>Fitness</span>Den</h1>
+      <div class="sub">Self-evolving fat loss → toning → muscle-gain program</div>
+    </div>
+  </div>
+  <div class="herostrip">
+    <div class="herochip">🎯 Swimmer-body goal</div>
+    <div class="herochip">📅 Calendar-driven</div>
+    <div class="herochip">🔁 Evolves every 6 weeks</div>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-view="home">🏠 Home</button>
+  <button class="tab-btn" data-view="workout">🏋️ Workout</button>
+  <button class="tab-btn" data-view="diet">🍽️ Diet</button>
+  <button class="tab-btn" data-view="checkin">📸 Check-in</button>
+  <button class="tab-btn" data-view="progress">📈 Progress</button>
+  <button class="tab-btn" data-view="tips">💡 Tips</button>
+</nav>
+
+<main>
+
+<!-- ============ HOME / LANDING VIEW ============ -->
+<section class="view active" id="view-home">
+  <div class="hero-card">
+    <h2 id="homeGoalTitle">Loading your program…</h2>
+    <div class="hsub" id="homeGoalSub"></div>
+    <div class="hero-stats">
+      <div class="hs"><div class="n" id="homeWeekNum">–</div><div class="l">Week</div></div>
+      <div class="hs"><div class="n" id="homeWeightNow">–</div><div class="l">Weight</div></div>
+      <div class="hs"><div class="n" id="homeStreak">–</div><div class="l">Sessions logged</div></div>
+    </div>
+    <button class="cta" id="homeGoToWorkout">Go to Today's Workout →</button>
+  </div>
+  <div id="homeTargetBanner"></div>
+  <div class="card">
+    <h3>This week</h3>
+    <div class="note" id="homeCheckinNote"></div>
+  </div>
+  <div class="card">
+    <h3>Latest badge</h3>
+    <div id="homeLatestBadge"><div class="empty">Complete your first week to earn a badge.</div></div>
+  </div>
+</section>
+
+<!-- ============ WORKOUT VIEW ============ -->
+<section class="view" id="view-workout">
+
+  <div class="card">
+    <h3>Calendar</h3>
+    <div class="calwrap">
+      <button class="calnav" id="calPrev">‹</button>
+      <div class="calstrip" id="calStrip"></div>
+      <button class="calnav" id="calNext">›</button>
+    </div>
+    <div class="note" id="phaseStatus"></div>
+  </div>
+
+  <div class="card" id="warmupCard">
+    <h2>🔥 Warm-Up (~6–7 min)</h2>
+    <ul class="check" id="warmupList"></ul>
+  </div>
+
+  <div class="card">
+    <h2 id="dayTitle">Workout</h2>
+    <div class="note" id="kcalNote"></div>
+    <div class="coach-note" id="coachNote" style="display:none;"></div>
+    <div id="startPrompt">
+      <button class="startbtn" id="startWorkoutBtn">▶ Start Workout</button>
+    </div>
+    <div id="sessionBlock" style="display:none;">
+      <div class="progtext" id="progText"></div>
+      <div class="progwrap"><div class="progbar" id="progBar" style="width:0%"></div></div>
+      <div id="exerciseList"></div>
+      <div id="finisherBlock"></div>
+    </div>
+  </div>
+
+  <div class="card" id="cooldownCard" style="display:none;">
+    <h2>🧘 Cool-Down (~6–7 min)</h2>
+    <ul class="check" id="cooldownList"></ul>
+  </div>
+
+  <button class="bigbtn stop" id="stopWorkoutBtn" style="display:none;">🛑 Stop Workout</button>
+  <div class="note" id="completeHint" style="display:none;">Check off warm-up, log every exercise, then check off cool-down to unlock Stop Workout.</div>
+
+</section>
+
+<!-- ============ DIET VIEW ============ -->
+<section class="view" id="view-diet">
+  <div class="card">
+    <h3>Day Type</h3>
+    <div class="pillrow">
+      <button class="pill active" data-diet="weekday">Mon–Sat</button>
+      <button class="pill" data-diet="sunday">Sunday (Cheat Day)</button>
+    </div>
+    <div class="note" id="dietBlurb"></div>
+  </div>
+  <div class="card" id="mealContainer"></div>
+  <div class="card">
+    <div class="note" id="dietRepoNote"></div>
+    <div class="note" id="weightAdjustNote"></div>
+  </div>
+</section>
+
+<!-- ============ CHECK-IN VIEW ============ -->
+<section class="view" id="view-checkin">
+  <div class="card">
+    <h2>📸 Weekly Check-in</h2>
+    <div class="note" id="checkinStatusNote"></div>
+    <h3>This week's weight</h3>
+    <div class="set-row">
+      <label>Weight (kg)<br><input type="number" min="30" max="250" step="0.1" id="checkinWeightInput"></label>
+    </div>
+    <h3>4 photos — front / back / left / right</h3>
+    <div class="checkin-grid">
+      <div class="checkin-slot"><label>Front</label><input type="file" accept="image/*" capture="environment" id="ci-front"></div>
+      <div class="checkin-slot"><label>Back</label><input type="file" accept="image/*" capture="environment" id="ci-back"></div>
+      <div class="checkin-slot"><label>Left side</label><input type="file" accept="image/*" capture="environment" id="ci-left"></div>
+      <div class="checkin-slot"><label>Right side</label><input type="file" accept="image/*" capture="environment" id="ci-right"></div>
+    </div>
+    <button class="bigbtn" id="checkinSubmitBtn">✓ Submit This Week's Check-in</button>
+    <div class="note">Photos are resized and stored only on this device. To keep the app light, full photos are kept for your most recent 8 check-ins — older weeks keep the weight and date, not the images.</div>
+  </div>
+  <div class="card">
+    <h2>Check-in History</h2>
+    <div id="checkinHistoryList"><div class="empty">No check-ins yet.</div></div>
+  </div>
+</section>
+
+<!-- ============ PROGRESS VIEW ============ -->
+<section class="view" id="view-progress">
+  <div class="card">
+    <h2>🎯 Target Weight (update every 6 weeks)</h2>
+    <div class="note" id="targetWeightNote"></div>
+    <div class="set-row">
+      <label>New target (kg)<br><input type="number" min="30" max="250" step="0.1" id="targetWeightInput"></label>
+      <button class="logbtn" id="targetWeightBtn">Save Target</button>
+    </div>
+  </div>
+  <div class="card">
+    <h2>🏅 Badges</h2>
+    <div id="badgeList"><div class="empty">Complete your first week to earn a badge.</div></div>
+  </div>
+  <div class="card">
+    <h2>⚖️ Weight Tracker</h2>
+    <div class="log-row" style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap;">
+      <label style="font-size:0.72rem;color:var(--muted);">Weight (kg)<br><input type="number" min="30" max="250" step="0.1" id="weightInput" style="width:74px;background:var(--white);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 8px;font-size:0.85rem;"></label>
+      <button class="logbtn" id="weightLogBtn">✓ Log Today's Weight</button>
+    </div>
+    <div class="note" id="weightSummary"></div>
+    <div id="weightHistoryList"></div>
+  </div>
+  <div class="card">
+    <h2>Session History</h2>
+    <div id="historyList"><div class="empty">No workouts logged yet — complete one from the Workout tab.</div></div>
+  </div>
+</section>
+
+<!-- ============ TIPS VIEW ============ -->
+<section class="view" id="view-tips">
+  <div class="card">
+    <h2>Your Goal</h2>
+    <div class="journey">
+      <div class="step"><div class="kg">78kg</div><div class="lbl">Start</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="kg">Lean &amp; Toned</div><div class="lbl">Swimmer-body target</div></div>
+    </div>
+    <div class="note">The program runs on a repeating 24-week supercycle: weeks 1–12 Fat Loss &amp; Toning, weeks 13–18 Weight Loss + Muscle Gain, weeks 19–24 Muscle Gain &amp; Maintenance — then it repeats with fresh exercise variants pulled from the exercise repository, indefinitely. You never have to reset or reinstall anything for it to keep evolving.</div>
+  </div>
+  <div class="card">
+    <h2>Practical Tips</h2>
+    <h3>Hydration &amp; Sleep</h3>
+    <ul class="tiplist"><li>3–4L water daily, more on training days</li><li>7–8 hrs sleep — recovery drives fat loss as much as training does</li></ul>
+    <h3>What to Avoid</h3>
+    <ul class="tiplist"><li>Fried snacks, sugary drinks, refined flour (maida)</li><li>Alcohol — limit strictly, especially outside the Sunday allowance</li></ul>
+    <h3>A Note on the Deficit</h3>
+    <div class="note">1200–1500 kcal combined with 6 tough sessions/week is an aggressive plan. Re-check your weight and energy weekly — if you're feeling drained, dizzy, or performance is tanking, it's worth adding 150–200 kcal back in or speaking with a doctor/nutritionist. This app is a planning tool, not medical advice.</div>
+  </div>
+  <div class="card">
+    <h2>How the engine works (honesty note)</h2>
+    <div class="note">The calendar covers any date because it's computed live from your start date — not stored day-by-day — so it works the same on day 1 and 30 years from now. Exercise variety across repeated 6-week blocks comes from a deterministic rotation through the exercise repository, not hand-written content for literally every future week, so the same split can recur in a different form roughly every 30–40 weeks. Check-in photos older than your most recent 8 weeks are pruned automatically to keep the app fast and storage-light — the weight and date for those weeks are kept forever.</div>
+  </div>
+</section>
+
+</main>
+
+<!-- Questionnaire Modal -->
+<div class="modal-overlay" id="qModal">
+  <div class="modal">
+    <h2>How was that workout?</h2>
+    <div class="qgroup">
+      <label class="qlabel">Overall difficulty</label>
+      <div class="optrow" data-q="difficulty">
+        <button class="optbtn" data-v="Easy">Easy</button>
+        <button class="optbtn" data-v="Moderate">Moderate</button>
+        <button class="optbtn" data-v="Hard">Hard</button>
+        <button class="optbtn" data-v="Very Hard">Very Hard</button>
+      </div>
+    </div>
+    <div class="qgroup">
+      <label class="qlabel">Energy level going in</label>
+      <div class="optrow" data-q="energy">
+        <button class="optbtn" data-v="1">1</button>
+        <button class="optbtn" data-v="2">2</button>
+        <button class="optbtn" data-v="3">3</button>
+        <button class="optbtn" data-v="4">4</button>
+        <button class="optbtn" data-v="5">5</button>
+      </div>
+    </div>
+    <div class="qgroup">
+      <label class="qlabel">Any pain or discomfort?</label>
+      <div class="optrow" data-q="pain">
+        <button class="optbtn" data-v="None">None</button>
+        <button class="optbtn" data-v="Mild">Mild</button>
+        <button class="optbtn" data-v="Significant">Significant</button>
+      </div>
+    </div>
+    <div class="qgroup">
+      <label class="qlabel">Notes (optional)</label>
+      <textarea class="qtext" id="qNotes" placeholder="How did it feel, anything to adjust next time..."></textarea>
+    </div>
+    <button class="bigbtn" id="qSubmit">Save & Finish</button>
+    <button class="bigbtn secondary" id="qCancel">Cancel</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   ICONS
+   ============================================================ */
+const ICONS = {
+  weight: '<svg viewBox="0 0 24 24"><rect x="1" y="9" width="4" height="6" rx="1"/><rect x="19" y="9" width="4" height="6" rx="1"/><rect x="5" y="10.3" width="14" height="3.4" rx="1"/></svg>',
+  legs:   '<svg viewBox="0 0 24 24"><circle cx="12" cy="4.2" r="2.2"/><path d="M12 7 L8 13 L9 21 M12 7 L16 13 L15 21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  core:   '<svg viewBox="0 0 24 24"><path d="M12 2c1 3-3 4-3 8a3 3 0 006 0c0-1.5-1-2-1-3.5 1.5 1 3 3 3 6a5 5 0 01-10 0c0-5 3-7 5-10.5z"/></svg>',
+  cardio: '<svg viewBox="0 0 24 24"><path d="M13 2 L4 14h6l-2 8 9-12h-6l2-8z"/></svg>'
+};
+const MUSCLE_ICON = { chest:'weight', back:'weight', shoulders:'weight', biceps:'weight', triceps:'weight', quads:'legs', hamstrings:'legs', glutes:'legs', calves:'legs', core:'core', cardio:'cardio' };
+
+function ytSearch(q){ return 'https://www.youtube.com/results?search_query='+encodeURIComponent(q+' proper form tutorial'); }
+
+/* ============================================================
+   EXERCISE REPOSITORY — each exercise has its OWN 3 unique alternates
+   (bodyweight / calisthenics / alternate-equipment options)
+   ============================================================ */
+const MUSCLE_POOLS = {
+  chest: [
+    {name:"Flat Barbell Bench Press", alts:["DB Flat Bench Press","Push-Ups","Machine Chest Press"]},
+    {name:"Incline DB Press", alts:["Incline Push-Ups","Incline Machine Press","Resistance Band Chest Press"]},
+    {name:"DB Flat Bench Press", alts:["Flat Barbell Bench Press","Diamond Push-Ups","Cable Chest Press"]},
+    {name:"Push-Ups", alts:["Incline Push-Ups","Decline Push-Ups","Knee Push-Ups"]},
+    {name:"Pec Deck / Chest Fly Machine", alts:["DB Chest Fly","Cable Fly","Resistance Band Fly"]},
+    {name:"Cable Crossover", alts:["DB Pullover","Standing Band Crossover","Wide Push-Ups"]},
+    {name:"Chest Dips", alts:["Bench Dips","Close-Grip Push-Ups","Machine Dip"]}
+  ],
+  back: [
+    {name:"Lat Pulldown", alts:["Assisted Pull-Up","Band Pulldown","Inverted Row"]},
+    {name:"Seated Cable Row", alts:["DB Bent-Over Row","Resistance Band Row","Inverted Row"]},
+    {name:"DB Bent-Over Row", alts:["Barbell Row","Single-Arm DB Row","T-Bar Row"]},
+    {name:"Pull-Ups", alts:["Chin-Up Negatives","Assisted Pull-Up Machine","Band-Assisted Pull-Up"]},
+    {name:"Superman Hold", alts:["Bird Dog","Reverse Fly","Back Extension"]},
+    {name:"Single-Arm DB Row", alts:["Chest-Supported Row","Cable Row","Resistance Band Row"]}
+  ],
+  shoulders: [
+    {name:"DB Shoulder Press", alts:["Machine Shoulder Press","Pike Push-Ups","Resistance Band Press"]},
+    {name:"DB Lateral Raise", alts:["Cable Lateral Raise","Band Lateral Raise","Machine Lateral Raise"]},
+    {name:"Pike Push-Ups", alts:["Wall Handstand Hold","DB Shoulder Press","Band Overhead Press"]},
+    {name:"Front Raise", alts:["Plate Front Raise","Band Front Raise","Cable Front Raise"]},
+    {name:"Rear Delt Fly", alts:["Face Pulls","Band Pull-Apart","Reverse Pec Deck"]},
+    {name:"Arnold Press", alts:["Standing Barbell Press","Seated DB Press","Kettlebell Press"]}
+  ],
+  biceps: [
+    {name:"DB Bicep Curl", alts:["Barbell Curl","Resistance Band Curl","Chin-Up Negatives"]},
+    {name:"Barbell Curl", alts:["EZ-Bar Curl","Cable Curl","Isometric Towel Curl"]},
+    {name:"Hammer Curl", alts:["Cross-Body Hammer Curl","Rope Hammer Curl","Band Hammer Curl"]},
+    {name:"Concentration Curl", alts:["Preacher Curl","Cable Curl","Band Curl"]},
+    {name:"Chin-Up Negatives", alts:["Band-Assisted Chin-Up","Isometric Bar Hang","Underhand Inverted Row"]}
+  ],
+  triceps: [
+    {name:"Cable Triceps Pushdown", alts:["Diamond Push-Ups","Band Pushdown","Overhead DB Extension"]},
+    {name:"DB Overhead Triceps Extension", alts:["Barbell Skull Crusher","Rope Overhead Extension","Bench Dips"]},
+    {name:"Chair/Bench Dips", alts:["Diamond Push-Ups","Close-Grip Push-Ups","Machine Dip"]},
+    {name:"Diamond Push-Ups", alts:["Close-Grip Bench Press","DB Kickback","Band Triceps Extension"]},
+    {name:"DB Kickback", alts:["Cable Kickback","Band Kickback","Overhead Rope Extension"]}
+  ],
+  quads: [
+    {name:"Back Squat", alts:["Goblet Squat","Leg Press","Bodyweight Squats"]},
+    {name:"DB Goblet Squat", alts:["Bodyweight Squats","Leg Press","Front Squat"]},
+    {name:"Walking Lunges", alts:["Static Lunges","Bulgarian Split Squat","Step-Ups"]},
+    {name:"Leg Press", alts:["Hack Squat","Goblet Squat","Wall Sit"]},
+    {name:"Leg Extension Machine", alts:["Sissy Squat","Step-Ups","Wall Sit"]},
+    {name:"Bulgarian Split Squat", alts:["Walking Lunges","Step-Ups","Single-Leg Press"]}
+  ],
+  hamstrings: [
+    {name:"DB Romanian Deadlift", alts:["Barbell RDL","Single-Leg RDL (Bodyweight)","Cable Pull-Through"]},
+    {name:"Leg Curl Machine", alts:["Stability Ball Curl","Nordic Curl (assisted)","Band Leg Curl"]},
+    {name:"Glute Bridge", alts:["Single-Leg Glute Bridge","Hip Thrust","Band Glute Bridge"]},
+    {name:"Single-Leg RDL (Bodyweight)", alts:["DB Romanian Deadlift","Good Morning","Cable Pull-Through"]}
+  ],
+  glutes: [
+    {name:"Hip Thrust", alts:["Glute Bridge","Cable Kickback","Banded Hip Thrust"]},
+    {name:"Cable Glute Kickback", alts:["Band Kickback","Donkey Kick","Step-Up with Knee Drive"]},
+    {name:"Sumo Squat", alts:["Sumo DB Squat","Curtsy Lunge","Lateral Band Walk"]}
+  ],
+  calves: [
+    {name:"Standing Calf Raise", alts:["Seated Calf Raise","Single-Leg Calf Raise","Bodyweight Calf Raise"]},
+    {name:"Seated Calf Raise Machine", alts:["Standing Calf Raise","DB Calf Raise","Band Calf Raise"]}
+  ],
+  core: [
+    {name:"Plank", alts:["Side Plank","RKC Plank","Stability Ball Plank"]},
+    {name:"Cable Crunch", alts:["Weighted Sit-Up","Ab Wheel Rollout","Reverse Crunch"]},
+    {name:"Weighted Russian Twist", alts:["Bicycle Crunch","Cable Woodchopper","Medicine Ball Twist"]},
+    {name:"Hanging Leg Raise", alts:["Lying Leg Raise","Captain's Chair Knee Raise","Reverse Crunch"]},
+    {name:"Mountain Climbers", alts:["High Knees","Plank Jacks","Bicycle Crunch"]}
+  ],
+  cardio: [
+    {name:"Burpees", alts:["Jump Squats","Mountain Climbers","Jumping Jacks"]},
+    {name:"Kettlebell Swings", alts:["DB Swings","Jump Rope","Battle Ropes"]},
+    {name:"DB Thrusters", alts:["Wall Ball","Squat to Press","Man Makers"]},
+    {name:"Jump Rope", alts:["High Knees","Jumping Jacks","Box Step-Ups"]},
+    {name:"Rowing Machine", alts:["Assault Bike","Jump Rope","Shadow Boxing"]}
+  ]
+};
+
+/* 6-day Push/Pull/Legs x2 split — Sunday handled separately as recovery/cardio */
+const SPLIT_DAYS = [
+  {label:"Push", muscles:[["chest",2],["shoulders",2],["triceps",1]]},
+  {label:"Pull", muscles:[["back",3],["biceps",2]]},
+  {label:"Legs", muscles:[["quads",2],["hamstrings",1],["glutes",1],["calves",1]]},
+  {label:"Push", muscles:[["chest",2],["shoulders",2],["triceps",1]]},
+  {label:"Pull", muscles:[["back",3],["biceps",2]]},
+  {label:"Legs & Core", muscles:[["quads",1],["hamstrings",1],["glutes",1],["core",2]]}
+];
+
+const CATEGORY_SCHEME = {
+  fatloss:      {reps:"12-15", rest:"30-45s", sets:3, finisher:true,  label:"Fat Loss & Toning",            note:"Higher reps, short rest, metabolic finishers — built to burn."},
+  maintain_gain:{reps:"8-12",  rest:"60s",     sets:4, finisher:false, label:"Weight Loss + Muscle Gain",    note:"Moderate reps and rest — building strength while staying lean."},
+  musclegain:   {reps:"6-10",  rest:"75-90s",  sets:4, finisher:false, label:"Muscle Gain & Maintenance",    note:"Heavier loads, longer rest — priority is building muscle."}
+};
+
+const WARMUP = ["Jumping Jacks — 1 min","Arm Circles — 30s each direction","Bodyweight Squats — x15","Leg Swings — x10 per leg","Torso Twists — x20","High Knees — 30s"];
+const COOLDOWN = ["Chest Doorway Stretch — 30s","Child's Pose — 30s","Standing Hamstring Stretch — 30s each leg","Quad Stretch — 30s each leg","Shoulder Cross-Body Stretch — 20s each arm","Cat-Cow — x10","Deep Breathing — 1 min"];
+const CARDIO_OPTIONS = ["20 min brisk walk or jog","15 min jump rope intervals (30s on/30s off)","20 min cycling, easy-moderate pace","Swimming — 20 laps easy pace","Full rest day — stretch or walk only"];
+
+/* ============================================================
+   CALENDAR / GOAL-PHASE ENGINE (self-sustaining — computed, not stored)
+   ============================================================ */
+function dateOnly(d){ const x=new Date(d); x.setHours(0,0,0,0); return x; }
+function daysBetween(a,b){ return Math.round((dateOnly(b)-dateOnly(a))/(1000*60*60*24)); }
+function getWeekNumberForDate(date){
+  const diff = daysBetween(new Date(state.startDate), date);
+  return Math.max(1, Math.floor(diff/7)+1);
+}
+function getBlockIndexForWeek(weekNum){ return Math.floor((weekNum-1)/6); } // 0-based, increments forever
+function getCategoryForBlock(blockIndex){
+  const pos = ((blockIndex % 4) + 4) % 4; // 0,1 = fatloss; 2 = maintain_gain; 3 = musclegain
+  if(pos===0 || pos===1) return 'fatloss';
+  if(pos===2) return 'maintain_gain';
+  return 'musclegain';
+}
+function getSupercycleNumber(blockIndex){ return Math.floor(blockIndex/4); } // increments every 24 weeks
+function getExerciseForSlot(muscle, blockIndex, slotOffset){
+  const pool = MUSCLE_POOLS[muscle];
+  const seed = blockIndex + slotOffset*3;
+  return pool[((seed % pool.length)+pool.length) % pool.length];
+}
+function getWorkoutForDate(date){
+  const dow = date.getDay(); // 0 Sun ... 6 Sat
+  const weekNum = getWeekNumberForDate(date);
+  const blockIndex = getBlockIndexForWeek(weekNum);
+  const category = getCategoryForBlock(blockIndex);
+  const scheme = CATEGORY_SCHEME[category];
+  if(dow===0){
+    const cardioIdx = ((weekNum-1) + blockIndex) % CARDIO_OPTIONS.length;
+    return { isRest:true, weekNum, blockIndex, category, scheme, label:"Recovery / Cardio", cardioChoice: CARDIO_OPTIONS[cardioIdx] };
+  }
+  const splitIdx = dow-1; // Mon=0..Sat=5
+  const daySpec = SPLIT_DAYS[splitIdx];
+  const exercises = [];
+  let slotOffset = 0;
+  daySpec.muscles.forEach(([muscle,count])=>{
+    for(let i=0;i<count;i++){
+      const ex = getExerciseForSlot(muscle, blockIndex, slotOffset);
+      exercises.push({ name: ex.name, muscle, alts: ex.alts, target: scheme.reps+' reps', sets: scheme.sets, rest: scheme.rest });
+      slotOffset++;
+    }
+  });
+  const finisher = scheme.finisher ? { name:"Metabolic Finisher ("+(3+(blockIndex%3))+" rounds)", moves:["Burpees","Jump Squats","Mountain Climbers","Jumping Jacks"].slice(0, 3+(blockIndex%2)) } : null;
+  return { isRest:false, weekNum, blockIndex, category, scheme, splitIdx, label:daySpec.label, exercises, finisher };
+}
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let state = JSON.parse(localStorage.getItem('fitnessden_state')||localStorage.getItem('swimshred_state')||'null') || {
+  phase:1, day:0, warmup:[], cooldown:[], swaps:{}, logs:{}, history:[], exerciseHistory:{}
+};
+if(!state.exerciseHistory) state.exerciseHistory = {};
+if(!state.weightLog) state.weightLog = [];
+if(!state.checkins) state.checkins = [];
+if(!state.setLogs) state.setLogs = [];
+if(!state.badges) state.badges = [];
+let __needsInitSave = false;
+if(!state.startDate){ state.startDate = new Date().toISOString(); __needsInitSave = true; }
+if(state.phaseAutoAdvance===undefined){ state.phaseAutoAdvance = true; __needsInitSave = true; }
+if(state.targetWeight===undefined){ state.targetWeight = null; __needsInitSave = true; }
+if(state.targetWeightSetAtBlock===undefined){ state.targetWeightSetAtBlock = null; __needsInitSave = true; }
+if(state.selectedDateISO===undefined){ state.selectedDateISO = dateOnly(new Date()).toISOString(); __needsInitSave = true; }
+if(state.sessionStarted===undefined){ state.sessionStarted = false; __needsInitSave = true; }
+function saveState(){ localStorage.setItem('fitnessden_state', JSON.stringify(state)); }
+if(__needsInitSave) saveState();
+
+function getSelectedDate(){ return new Date(state.selectedDateISO); }
+function setSelectedDate(d){ state.selectedDateISO = dateOnly(d).toISOString(); saveState(); }
+function isSameDate(a,b){ return dateOnly(a).getTime()===dateOnly(b).getTime(); }
+
+/* ============================================================
+   WEIGHT TRACKING
+   ============================================================ */
+const BASELINE_WEIGHT_KG = 78;
+function getCurrentWeight(){ return state.weightLog.length ? state.weightLog[state.weightLog.length-1].weight : BASELINE_WEIGHT_KG; }
+function getStartWeight(){ return state.weightLog.length ? state.weightLog[0].weight : BASELINE_WEIGHT_KG; }
+function getWeightLossKg(){ return Math.max(0, +(getStartWeight()-getCurrentWeight()).toFixed(1)); }
+function getWeeklyLossRate(){
+  if(state.weightLog.length<2) return null;
+  const first = state.weightLog[0], last = state.weightLog[state.weightLog.length-1];
+  const days = (last.ts-first.ts)/(1000*60*60*24);
+  if(days<=0) return null;
+  const kgLost = first.weight-last.weight;
+  return +(kgLost/(days/7)).toFixed(2);
+}
+function getAdjustedTarget(baseKcal){
+  const adj = Math.round(getWeightLossKg()*10);
+  return Math.max(1200, baseKcal-adj);
+}
+
+/* ============================================================
+   DIET REPOSITORY — Indian, chicken/egg/vegetable-focused
+   ============================================================ */
+const DIET_REPO = {
+  weekday: {
+    breakfast: [
+      {items:"3 whole eggs + 1 egg white bhurji with onion, tomato & capsicum + 1 multigrain toast", p:28,c:18,f:16,k:300},
+      {items:"Egg white omelette (5 whites) + 2 multigrain toast", p:26,c:20,f:12,k:300},
+      {items:"Boiled eggs (3 whole + 2 white) + 1 toast", p:27,c:16,f:15,k:290},
+      {items:"Low-fat curd (250g) with chia seeds, cinnamon & a handful of nuts", p:18,c:20,f:14,k:290},
+      {items:"Egg white omelette (4 whites + 1 whole) with mixed vegetables + 1 toast", p:26,c:20,f:14,k:300},
+      {items:"Grilled fish (80g) + 1 toast, light breakfast", p:22,c:16,f:10,k:280},
+      {items:"Moong dal chilla (2) with vegetables + curd", p:20,c:24,f:10,k:280},
+      {items:"Paneer bhurji (80g, low-fat) + 1 multigrain toast", p:22,c:18,f:14,k:290}
+    ],
+    lunch: [
+      {items:"Grilled chicken breast (150g) + large mixed salad (cucumber, tomato, lettuce, lemon) + 1 roti", p:42,c:32,f:14,k:430},
+      {items:"Tandoori chicken tikka (150g, no cream) + salad + 1 roti", p:41,c:30,f:15,k:430},
+      {items:"Egg curry (3 eggs) + 1 roti", p:30,c:32,f:18,k:420},
+      {items:"Boiled shredded chicken (150g) clear soup + steamed veg + small roti", p:38,c:26,f:10,k:400},
+      {items:"Grilled fish (rawas/pomfret, 150g) + mixed salad + 1 roti", p:40,c:30,f:14,k:420},
+      {items:"Fish curry, light & coconut-free + 1 roti", p:36,c:28,f:14,k:410},
+      {items:"Chicken stir-fry (150g) with bell peppers & broccoli, minimal oil + small roti", p:40,c:24,f:14,k:400},
+      {items:"Rajma / chickpea curry (veg protein day) + brown rice, small portion", p:22,c:48,f:10,k:380}
+    ],
+    snack: [
+      {items:"1 boiled egg + roasted chana (small handful) + cucumber & carrot sticks", p:14,c:12,f:8,k:160},
+      {items:"Sprouts chaat (moong sprouts, onion, tomato, lime) + 1 boiled egg", p:14,c:16,f:6,k:170},
+      {items:"Buttermilk / chaas + roasted makhana handful", p:8,c:14,f:5,k:150},
+      {items:"2 boiled egg whites + carrot sticks", p:12,c:8,f:2,k:110},
+      {items:"Handful roasted chana + 1 fruit (apple/guava)", p:10,c:22,f:4,k:170},
+      {items:"Greek yogurt (small cup) with cucumber and mint", p:12,c:8,f:4,k:120}
+    ],
+    dinner: [
+      {items:"Grilled chicken (150g) + sautéed vegetables + small bowl dal", p:38,c:20,f:16,k:400},
+      {items:"Egg white curry (5 whites) + vegetables + small roti", p:32,c:22,f:10,k:380},
+      {items:"Chicken stir-fry (150g), minimal oil, mixed veg + dal", p:38,c:22,f:14,k:410},
+      {items:"Grilled chicken salad (150g), lemon-olive oil dressing + dal", p:37,c:18,f:15,k:380},
+      {items:"Grilled chicken tikka (130g) + sautéed mixed vegetables + small bowl moong dal", p:36,c:22,f:14,k:400},
+      {items:"Grilled fish (130g) + vegetables + dal", p:34,c:22,f:13,k:390},
+      {items:"Paneer bhurji (100g, low-fat) + mixed vegetables", p:26,c:16,f:16,k:340},
+      {items:"Vegetable & egg-white stir fry with a small bowl of dal", p:24,c:24,f:9,k:320}
+    ]
+  },
+  sunday: {
+    breakfast: [
+      {items:"2 whole eggs + 1 egg white bhurji + 1 extra multigrain toast", p:22,c:22,f:14,k:300},
+      {items:"Masala omelette (2 eggs) + toast", p:20,c:20,f:14,k:300},
+      {items:"2 whole eggs + vegetable-stuffed small paratha + curd", p:20,c:30,f:16,k:320},
+      {items:"Idli (4) with sambar", p:14,c:44,f:4,k:280}
+    ],
+    cheat: [
+      {items:"Chicken biryani (1.5 cup) + raita", p:32,c:75,f:18,k:600},
+      {items:"Butter chicken (small bowl) + 1 roti", p:30,c:38,f:24,k:620},
+      {items:"Chicken shawarma roll", p:28,c:48,f:20,k:550},
+      {items:"2 slices regular-crust chicken pizza", p:26,c:52,f:22,k:580},
+      {items:"Chicken pulao (1.5 cup) + raita", p:30,c:70,f:16,k:580},
+      {items:"Fish curry + rice", p:28,c:60,f:16,k:560}
+    ],
+    treat: [
+      {items:"2 pcs gulab jamun, with chai", p:4,c:35,f:10,k:250},
+      {items:"1 small brownie, with chai", p:4,c:34,f:12,k:260},
+      {items:"1 small cup kulfi", p:4,c:26,f:10,k:220},
+      {items:"2 pcs rasgulla, with chai", p:6,c:40,f:6,k:230}
+    ],
+    dinner: [
+      {items:"Grilled chicken + 1–2 roti + sabzi (slightly relaxed portions)", p:36,c:38,f:16,k:480},
+      {items:"Chicken curry + rice, moderate portion", p:34,c:44,f:18,k:500},
+      {items:"Egg curry + 2 roti", p:30,c:40,f:14,k:460},
+      {items:"Grilled fish + 1–2 roti + sabzi (slightly relaxed portions)", p:34,c:36,f:14,k:460}
+    ]
+  }
+};
+function dateSeed(date){ return daysBetween(new Date(2020,0,1), date); }
+function getMealOfDay(slotArr, date, offset){ const seed = Math.abs(dateSeed(date)+offset); return slotArr[seed % slotArr.length]; }
+function computeDietTotals(meals){
+  return meals.reduce((acc,m)=>({p:acc.p+m.p,c:acc.c+m.c,f:acc.f+m.f,k:acc.k+m.k}), {p:0,c:0,f:0,k:0});
+}
+
+/* ============================================================
+   CHECK-INS (weekly weight + 4 photos, bounded image retention)
+   ============================================================ */
+const CHECKIN_IMAGE_RETENTION_WEEKS = 8;
+function resizeImageFile(file, maxDim, quality){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      const img = new Image();
+      img.onload = ()=>{
+        let w=img.width, h=img.height;
+        if(w>h && w>maxDim){ h=Math.round(h*maxDim/w); w=maxDim; }
+        else if(h>=w && h>maxDim){ w=Math.round(w*maxDim/h); h=maxDim; }
+        const canvas = document.createElement('canvas');
+        canvas.width=w; canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+function pruneOldCheckinImages(){
+  const cutoffIdx = state.checkins.length - CHECKIN_IMAGE_RETENTION_WEEKS;
+  state.checkins.forEach((c,i)=>{ if(i<cutoffIdx && c.images){ delete c.images; } });
+}
+function getCurrentCheckinWeek(){ return getWeekNumberForDate(new Date()); }
+function hasCheckinForWeek(weekNum){ return state.checkins.some(c=>c.weekNum===weekNum); }
+
+/* ============================================================
+   BADGES — computed from logged set volume, week over week
+   ============================================================ */
+function getVolumeForWeek(weekNum){
+  return state.setLogs.filter(s=>s.weekNum===weekNum).reduce((sum,s)=>{
+    const w = parseFloat(s.weight);
+    const r = parseFloat(s.reps)||0;
+    if(!isNaN(w)) return sum + w*r;
+    return sum + r; // bodyweight sets contribute rep count
+  },0);
+}
+function computeBadges(){
+  const weeksWithLogs = Array.from(new Set(state.setLogs.map(s=>s.weekNum))).sort((a,b)=>a-b);
+  const currentWeek = getCurrentCheckinWeek();
+  const badges = [];
+  weeksWithLogs.forEach(wk=>{
+    if(wk>=currentWeek) return; // only award for fully completed past weeks
+    const vol = getVolumeForWeek(wk);
+    if(vol<=0) return;
+    const prevVol = getVolumeForWeek(wk-1);
+    let tier, emoji, title;
+    if(!weeksWithLogs.includes(wk-1)){ tier='start'; emoji='🎖'; title='Getting Started'; }
+    else if(vol > prevVol*1.02){ tier='gold'; emoji='🥇'; title='Progressive Overload'; }
+    else if(vol >= prevVol*0.95){ tier='silver'; emoji='🥈'; title='Consistency'; }
+    else { tier='bronze'; emoji='🥉'; title='Showed Up'; }
+    badges.push({weekNum:wk, tier, emoji, title, volume:Math.round(vol)});
+  });
+  return badges;
+}
+
+/* ============================================================
+   RENDER: Home tab
+   ============================================================ */
+function renderHome(){
+  const today = new Date();
+  const w = getWorkoutForDate(today);
+  const titleEl = document.getElementById('homeGoalTitle');
+  const subEl = document.getElementById('homeGoalSub');
+  if(titleEl){
+    titleEl.textContent = w.isRest ? 'Recovery / Cardio Day' : w.scheme.label;
+    subEl.textContent = 'Week '+w.weekNum+' · '+(w.isRest ? 'Sunday — rest or light cardio' : w.scheme.note);
+  }
+  const wkEl = document.getElementById('homeWeekNum'); if(wkEl) wkEl.textContent = w.weekNum;
+  const wtEl = document.getElementById('homeWeightNow'); if(wtEl) wtEl.textContent = getCurrentWeight()+'kg';
+  const stEl = document.getElementById('homeStreak'); if(stEl) stEl.textContent = state.history.length;
+
+  const bannerEl = document.getElementById('homeTargetBanner');
+  if(bannerEl){
+    if(isTargetWeightDue()){
+      bannerEl.innerHTML = '<div class="banner">🎯 Time to set your 6-week target weight! Head to the Progress tab to lock in your goal for this block.</div>';
+    } else {
+      bannerEl.innerHTML = '';
+    }
+  }
+  const checkinNote = document.getElementById('homeCheckinNote');
+  if(checkinNote){
+    const wkNum = getCurrentCheckinWeek();
+    checkinNote.textContent = hasCheckinForWeek(wkNum) ? 'Week '+wkNum+' check-in done. Nice work.' : 'Week '+wkNum+' check-in is still open — submit your weight + 4 photos in the Check-in tab (due Sundays).';
+  }
+  const badgeEl = document.getElementById('homeLatestBadge');
+  if(badgeEl){
+    const badges = computeBadges();
+    if(badges.length){
+      const b = badges[badges.length-1];
+      badgeEl.innerHTML = '<div class="badgechip"><span class="emoji">'+b.emoji+'</span><div class="bwrap"><div class="btitle">'+b.title+'</div><div class="bsub">Week '+b.weekNum+' · volume '+b.volume+'</div></div></div>';
+    } else {
+      badgeEl.innerHTML = '<div class="empty">Complete your first week to earn a badge.</div>';
+    }
+  }
+}
+function isTargetWeightDue(){
+  const weekNum = getWeekNumberForDate(new Date());
+  const blockIndex = getBlockIndexForWeek(weekNum);
+  return state.targetWeightSetAtBlock !== blockIndex;
+}
+
+/* ============================================================
+   RENDER: Calendar strip + workout tab
+   ============================================================ */
+function renderCalendar(){
+  const strip = document.getElementById('calStrip');
+  if(!strip) return;
+  strip.innerHTML='';
+  const sel = getSelectedDate();
+  const weekStart = new Date(sel); weekStart.setDate(sel.getDate()-sel.getDay());
+  for(let i=0;i<7;i++){
+    const d = new Date(weekStart); d.setDate(weekStart.getDate()+i);
+    const w = getWorkoutForDate(d);
+    const el = document.createElement('div');
+    el.className = 'calday'+(isSameDate(d,new Date())?' today':'')+(isSameDate(d,sel)?' selected':'')+(w.isRest?' rest':'');
+    el.innerHTML = '<div class="dow">'+['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]+'</div>'+
+                    '<div class="dn">'+d.getDate()+'</div>'+
+                    '<div class="tag">'+(w.isRest?'Rest':w.label)+'</div>';
+    el.onclick = ()=>{ setSelectedDate(d); state.sessionStarted=false; saveState(); renderWorkoutTab(); };
+    strip.appendChild(el);
+  }
+}
+function shiftSelectedWeek(deltaDays){
+  const d = getSelectedDate();
+  d.setDate(d.getDate()+deltaDays);
+  setSelectedDate(d);
+  renderWorkoutTab();
+}
+
+function getSessionKeyForDate(date){ return dateOnly(date).toISOString(); }
+function getSessionLogs(){
+  const key = getSessionKeyForDate(getSelectedDate());
+  if(!state.logs[key]) state.logs[key] = {};
+  return state.logs[key];
+}
+
+function renderPhaseStatus(){
+  const el = document.getElementById('phaseStatus');
+  if(!el) return;
+  const sel = getSelectedDate();
+  const w = getWorkoutForDate(sel);
+  el.textContent = 'Week '+w.weekNum+' · '+(w.isRest? 'Recovery/Cardio' : w.scheme.label)+' — evolves automatically every 6 weeks, forever.';
+}
+
+function renderCoachNote(dayWorkout){
+  const el = document.getElementById('coachNote');
+  if(!el) return;
+  if(dayWorkout.isRest){ el.style.display='none'; return; }
+  const past = state.history.filter(s=>s.splitIdx===dayWorkout.splitIdx).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+  if(!past){ el.style.display='none'; return; }
+  let msg = '';
+  if(past.pain === 'Significant'){
+    msg = '⚠️ Last time on this split you noted significant pain/discomfort. Consider lighter loads today, swap to a bodyweight alternative, or check with a professional before pushing hard.';
+  } else if(past.difficulty === 'Very Hard'){
+    msg = '😮‍💨 Last session here was rated Very Hard. Ease off slightly today.';
+  } else if(past.difficulty === 'Hard'){
+    msg = 'Last time this felt Hard — hold steady on weight/reps today and focus on clean form.';
+  } else if(past.difficulty === 'Easy'){
+    msg = '💪 Last time this felt Easy — try adding 2.5–5kg or 2 extra reps per set today.';
+  } else if(past.difficulty === 'Moderate'){
+    msg = 'On track — aim to match or slightly beat your numbers from last time.';
+  }
+  if(msg){ el.textContent = msg; el.style.display='block'; } else { el.style.display='none'; }
+}
+
+function renderExercises(dayWorkout){
+  const list = document.getElementById('exerciseList'); list.innerHTML='';
+  const logs = getSessionLogs();
+  let doneCount=0;
+  dayWorkout.exercises.forEach((ex,i)=>{
+    const key='ex'+i;
+    const swapVal = state.swaps['sw-'+getSessionKeyForDate(getSelectedDate())+'-'+i];
+    const displayName = swapVal || ex.name;
+    const entry = logs[key];
+    const done = entry && entry.done;
+    if(done) doneCount++;
+    const iconKey = MUSCLE_ICON[ex.muscle] || 'weight';
+
+    const card=document.createElement('div'); card.className='ex-card'+(done?' done':'');
+    const top=document.createElement('div'); top.className='ex-top';
+    const left=document.createElement('div'); left.className='ex-left';
+    const icBadge=document.createElement('div'); icBadge.className='ic-badge'; icBadge.innerHTML=ICONS[iconKey];
+    const info=document.createElement('div');
+    const nm=document.createElement('div'); nm.className='ex-name'; nm.textContent=displayName;
+    const tg=document.createElement('div'); tg.className='ex-target'; tg.textContent=ex.sets+' sets × '+ex.target+' · rest '+ex.rest;
+    const vid=document.createElement('a'); vid.className='ex-video'; vid.target='_blank'; vid.rel='noopener';
+    vid.href=ytSearch(displayName); vid.textContent='🎥 Watch form video';
+    info.appendChild(nm); info.appendChild(tg);
+    const prev = state.exerciseHistory[displayName];
+    if(prev){
+      const lt=document.createElement('div'); lt.className='last-time';
+      lt.textContent='Last logged: '+prev.weight+'kg × '+prev.reps+' reps ('+prev.date+')';
+      info.appendChild(lt);
+    }
+    info.appendChild(vid);
+    left.appendChild(icBadge); left.appendChild(info);
+    top.appendChild(left);
+
+    const sel=document.createElement('select'); sel.className='swap-select';
+    const optDefault=document.createElement('option'); optDefault.value=''; optDefault.textContent='Default: '+ex.name;
+    sel.appendChild(optDefault);
+    (ex.alts||[]).forEach(altName=>{
+      const o=document.createElement('option'); o.value=altName; o.textContent=altName;
+      if(swapVal===altName) o.selected=true;
+      sel.appendChild(o);
+    });
+    sel.onchange=()=>{
+      const swapKey='sw-'+getSessionKeyForDate(getSelectedDate())+'-'+i;
+      if(sel.value===''){ delete state.swaps[swapKey]; } else { state.swaps[swapKey]=sel.value; }
+      saveState(); renderExercises(dayWorkout);
+    };
+    top.appendChild(sel);
+    card.appendChild(top);
+
+    if(!done){
+      for(let s=0;s<ex.sets;s++){
+        const row=document.createElement('div'); row.className='set-row';
+        row.innerHTML = '<span class="setlbl">Set '+(s+1)+'</span>'+
+                        '<label>Weight(kg)<br><input type="number" min="0" step="0.5" id="w-'+key+'-'+s+'"></label>'+
+                        '<label>Reps<br><input type="number" min="0" step="1" id="r-'+key+'-'+s+'"></label>';
+        card.appendChild(row);
+      }
+      const btn=document.createElement('button'); btn.className='logbtn'; btn.textContent='✓ Log Exercise';
+      btn.onclick=()=>{
+        const sets=[];
+        for(let s=0;s<ex.sets;s++){
+          const w=document.getElementById('w-'+key+'-'+s).value||'BW';
+          const r=document.getElementById('r-'+key+'-'+s).value||'0';
+          sets.push({weight:w, reps:r});
+          state.setLogs.push({date:new Date().toISOString(), weekNum:dayWorkout.weekNum, exercise:displayName, weight:w, reps:r});
+        }
+        logs[key]={done:true, name:displayName, sets};
+        const last = sets[sets.length-1];
+        state.exerciseHistory[displayName] = {weight:last.weight, reps:last.reps, date:new Date().toLocaleDateString()};
+        saveState(); renderExercises(dayWorkout); updateStopBtn(dayWorkout);
+      };
+      card.appendChild(btn);
+    } else {
+      const tag=document.createElement('div'); tag.className='logged-tag';
+      tag.textContent='✓ Logged — '+entry.sets.map(s=>s.weight+'kg×'+s.reps).join(', ');
+      card.appendChild(tag);
+    }
+    list.appendChild(card);
+  });
+
+  const fEl = document.getElementById('finisherBlock'); fEl.innerHTML='';
+  if(dayWorkout.finisher){
+    const key='finisher';
+    const done = logs[key] && logs[key].done;
+    const card=document.createElement('div'); card.className='ex-card'+(done?' done':'');
+    const top=document.createElement('div'); top.className='ex-top';
+    const left=document.createElement('div'); left.className='ex-left';
+    const icBadge=document.createElement('div'); icBadge.className='ic-badge'; icBadge.innerHTML=ICONS.cardio;
+    const info=document.createElement('div');
+    const nm=document.createElement('div'); nm.className='ex-name'; nm.textContent='🔥 '+dayWorkout.finisher.name;
+    const tg=document.createElement('div'); tg.className='ex-target'; tg.textContent=dayWorkout.finisher.moves.join(' · ');
+    info.appendChild(nm); info.appendChild(tg);
+    left.appendChild(icBadge); left.appendChild(info);
+    top.appendChild(left);
+    card.appendChild(top);
+    if(!done){
+      const btn=document.createElement('button'); btn.className='logbtn'; btn.textContent='✓ Mark Finisher Complete';
+      btn.onclick=()=>{ logs[key]={done:true}; saveState(); renderExercises(dayWorkout); updateStopBtn(dayWorkout); };
+      card.appendChild(btn);
+    } else {
+      const tag=document.createElement('div'); tag.className='logged-tag'; tag.textContent='✓ Finisher complete';
+      card.appendChild(tag);
+    }
+    fEl.appendChild(card);
+  }
+
+  const totalItems = dayWorkout.exercises.length + (dayWorkout.finisher?1:0);
+  document.getElementById('progText').textContent = doneCount+' / '+totalItems+' exercises logged';
+  document.getElementById('progBar').style.width = Math.round((doneCount/totalItems)*100)+'%';
+  updateStopBtn(dayWorkout);
+}
+
+function allExercisesDoneFor(dayWorkout){
+  const logs = getSessionLogs();
+  for(let i=0;i<dayWorkout.exercises.length;i++){ if(!logs['ex'+i] || !logs['ex'+i].done) return false; }
+  if(dayWorkout.finisher && (!logs['finisher']||!logs['finisher'].done)) return false;
+  return true;
+}
+function allWarmupDone(){ return state.warmup.length===WARMUP.length && state.warmup.every(x=>x); }
+function allCooldownDone(){ return state.cooldown.length===COOLDOWN.length && state.cooldown.every(x=>x); }
+
+function updateStopBtn(dayWorkout){
+  const btn = document.getElementById('stopWorkoutBtn');
+  if(!btn) return;
+  const ready = allWarmupDone() && allExercisesDoneFor(dayWorkout) && allCooldownDone();
+  btn.disabled = !ready;
+  const hint = document.getElementById('completeHint');
+  if(hint) hint.style.display = ready ? 'none':'block';
+}
+
+function renderWarmupCooldown(){
+  const wEl = document.getElementById('warmupList'); wEl.innerHTML='';
+  WARMUP.forEach((w,i)=>{
+    const li=document.createElement('li'); if(state.warmup[i]) li.classList.add('done');
+    const chk=document.createElement('div'); chk.className='chk'+(state.warmup[i]?' on':''); chk.textContent=state.warmup[i]?'✓':'';
+    chk.onclick=()=>{ state.warmup[i]=!state.warmup[i]; saveState(); renderWarmupCooldown(); updateStopBtn(getWorkoutForDate(getSelectedDate())); };
+    li.appendChild(chk); li.appendChild(document.createTextNode(w)); wEl.appendChild(li);
+  });
+  const cEl = document.getElementById('cooldownList'); cEl.innerHTML='';
+  COOLDOWN.forEach((w,i)=>{
+    const li=document.createElement('li'); if(state.cooldown[i]) li.classList.add('done');
+    const chk=document.createElement('div'); chk.className='chk'+(state.cooldown[i]?' on':''); chk.textContent=state.cooldown[i]?'✓':'';
+    chk.onclick=()=>{ state.cooldown[i]=!state.cooldown[i]; saveState(); renderWarmupCooldown(); updateStopBtn(getWorkoutForDate(getSelectedDate())); };
+    li.appendChild(chk); li.appendChild(document.createTextNode(w)); cEl.appendChild(li);
+  });
+}
+
+function resetSessionForNewDay(){
+  state.warmup = new Array(WARMUP.length).fill(false);
+  state.cooldown = new Array(COOLDOWN.length).fill(false);
+  saveState();
+}
+
+function renderWorkoutTab(){
+  renderCalendar();
+  renderPhaseStatus();
+  const sel = getSelectedDate();
+  const w = getWorkoutForDate(sel);
+  if(!state.warmup || state.warmup.length!==WARMUP.length) resetSessionForNewDay();
+
+  const dayTitle = document.getElementById('dayTitle');
+  const kcalNote = document.getElementById('kcalNote');
+  const warmupCard = document.getElementById('warmupCard');
+  const cooldownCard = document.getElementById('cooldownCard');
+  const startPrompt = document.getElementById('startPrompt');
+  const sessionBlock = document.getElementById('sessionBlock');
+  const stopBtn = document.getElementById('stopWorkoutBtn');
+
+  if(w.isRest){
+    dayTitle.textContent = 'Week '+w.weekNum+' — Recovery / Cardio (Sunday)';
+    kcalNote.textContent = 'Suggested: '+w.cardioChoice;
+    warmupCard.style.display='none'; cooldownCard.style.display='none';
+    startPrompt.style.display='none'; sessionBlock.style.display='none'; stopBtn.style.display='none';
+    document.getElementById('coachNote').style.display='none';
+    return;
+  }
+
+  dayTitle.textContent = 'Week '+w.weekNum+' — '+w.label+' Day';
+  kcalNote.textContent = w.scheme.label+': '+w.scheme.note;
+  renderCoachNote(w);
+
+  const started = !!state.sessionStarted;
+  warmupCard.style.display='block'; cooldownCard.style.display= started ? 'block':'none';
+  startPrompt.style.display = started ? 'none':'block';
+  sessionBlock.style.display = started ? 'block':'none';
+  stopBtn.style.display = started ? 'block':'none';
+
+  if(started){
+    renderWarmupCooldown();
+    renderExercises(w);
+  }
+}
+
+/* ============================================================
+   Start / Stop workout
+   ============================================================ */
+function wireWorkoutButtons(){
+  const startBtn = document.getElementById('startWorkoutBtn');
+  if(startBtn) startBtn.onclick = ()=>{ state.sessionStarted = true; saveState(); renderWorkoutTab(); };
+  const prevBtn = document.getElementById('calPrev');
+  if(prevBtn) prevBtn.onclick = ()=> shiftSelectedWeek(-7);
+  const nextBtn = document.getElementById('calNext');
+  if(nextBtn) nextBtn.onclick = ()=> shiftSelectedWeek(7);
+  const stopBtn = document.getElementById('stopWorkoutBtn');
+  if(stopBtn) stopBtn.onclick = ()=>{ document.getElementById('qModal').classList.add('open'); };
+  const goBtn = document.getElementById('homeGoToWorkout');
+  if(goBtn) goBtn.onclick = ()=>{
+    setSelectedDate(new Date());
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    document.querySelector('[data-view="workout"]').classList.add('active');
+    document.getElementById('view-workout').classList.add('active');
+    renderWorkoutTab();
+  };
+}
+
+/* Questionnaire */
+let qAnswers={difficulty:null,energy:null,pain:null};
+function wireQuestionnaire(){
+  document.querySelectorAll('.optrow').forEach(row=>{
+    row.querySelectorAll('.optbtn').forEach(btn=>{
+      btn.onclick=()=>{
+        row.querySelectorAll('.optbtn').forEach(b=>b.classList.remove('sel'));
+        btn.classList.add('sel');
+        qAnswers[row.dataset.q]=btn.dataset.v;
+      };
+    });
+  });
+  document.getElementById('qCancel').onclick=()=>{ document.getElementById('qModal').classList.remove('open'); };
+  document.getElementById('qSubmit').onclick=()=>{
+    const sel = getSelectedDate();
+    const w = getWorkoutForDate(sel);
+    const session = {
+      date:new Date().toLocaleString(),
+      weekNum:w.weekNum, splitIdx:w.splitIdx, label:w.label, category:w.category,
+      difficulty:qAnswers.difficulty||'—', energy:qAnswers.energy||'—', pain:qAnswers.pain||'—',
+      notes:document.getElementById('qNotes').value||''
+    };
+    state.history.unshift(session);
+    state.sessionStarted = false;
+    saveState();
+    document.getElementById('qModal').classList.remove('open');
+    document.getElementById('qNotes').value='';
+    qAnswers={difficulty:null,energy:null,pain:null};
+    document.querySelectorAll('.optbtn').forEach(b=>b.classList.remove('sel'));
+    renderWorkoutTab(); renderHistory(); renderHome(); renderBadges();
+    showToast('Workout stopped & logged! Great job 💪');
+  };
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block';
+  setTimeout(()=>{ t.style.display='none'; }, 2500);
+}
+
+/* ============================================================
+   RENDER: Weight tracker
+   ============================================================ */
+function renderWeightTracker(){
+  const summaryEl = document.getElementById('weightSummary');
+  const listEl = document.getElementById('weightHistoryList');
+  if(!summaryEl || !listEl) return;
+  if(!state.weightLog.length){
+    summaryEl.textContent = 'No weigh-ins yet. Program baseline is '+BASELINE_WEIGHT_KG+'kg — log your weight weekly to track real progress and auto-adjust your diet target.';
+    listEl.innerHTML='';
+    return;
+  }
+  const cur = getCurrentWeight();
+  const start = getStartWeight();
+  const lost = getWeightLossKg();
+  const rate = getWeeklyLossRate();
+  let txt = 'Current: '+cur+'kg · First logged: '+start+'kg · Change: '+(lost>0?'-'+lost+'kg':'0kg');
+  if(rate!==null){
+    txt += ' · Avg pace: '+(rate>0?'-':(rate<0?'+':''))+Math.abs(rate)+'kg/week';
+    if(rate>1.2) txt += ' — that\'s a fast rate; consider adding 150–200 kcal back in.';
+  }
+  summaryEl.textContent = txt;
+  listEl.innerHTML='';
+  const recent = state.weightLog.slice().reverse().slice(0,10);
+  recent.forEach((w,i)=>{
+    const idxInLog = state.weightLog.length-1-i;
+    const prev = state.weightLog[idxInLog-1];
+    const delta = prev ? +(w.weight-prev.weight).toFixed(1) : null;
+    const d=document.createElement('div'); d.className='session';
+    d.innerHTML = '<div class="srow1"><span>'+w.weight+'kg</span><span>'+w.date+'</span></div>'+
+                  (delta!==null?'<div class="srow2">'+(delta>0?'+':'')+delta+'kg vs previous weigh-in</div>':'<div class="srow2">First weigh-in</div>');
+    listEl.appendChild(d);
+  });
+}
+function wireWeightLog(){
+  const btn = document.getElementById('weightLogBtn');
+  if(!btn) return;
+  btn.onclick = ()=>{
+    const input = document.getElementById('weightInput');
+    const val = parseFloat(input.value);
+    if(!val || val<30 || val>250){ showToast('Enter a valid weight in kg'); return; }
+    const now = new Date();
+    const today = now.toLocaleDateString();
+    const existingIdx = state.weightLog.findIndex(w=>w.date===today);
+    if(existingIdx>=0){ state.weightLog[existingIdx].weight = val; state.weightLog[existingIdx].ts = now.getTime(); }
+    else { state.weightLog.push({date:today, weight:val, ts:now.getTime()}); }
+    state.weightLog.sort((a,b)=>a.ts-b.ts);
+    saveState();
+    input.value='';
+    renderWeightTracker(); renderDiet(); renderHome();
+    showToast('Weight logged ✅');
+  };
+}
+
+/* ============================================================
+   RENDER: Session history
+   ============================================================ */
+function renderHistory(){
+  const el = document.getElementById('historyList');
+  if(!state.history.length){ el.innerHTML='<div class="empty">No workouts logged yet — complete one from the Workout tab.</div>'; return; }
+  el.innerHTML='';
+  state.history.forEach(s=>{
+    const d=document.createElement('div'); d.className='session';
+    d.innerHTML = '<div class="srow1"><span>Week '+s.weekNum+' — '+s.label+'</span><span>'+(s.category?CATEGORY_SCHEME[s.category].label:'')+'</span></div>'+
+                  '<div class="srow2">'+s.date+' · Difficulty: '+s.difficulty+' · Energy: '+s.energy+'/5 · Pain: '+s.pain+'</div>'+
+                  (s.notes?'<div class="srow2">"'+s.notes+'"</div>':'');
+    el.appendChild(d);
+  });
+}
+
+/* ============================================================
+   RENDER: Badges + Target weight
+   ============================================================ */
+function renderBadges(){
+  const el = document.getElementById('badgeList');
+  if(!el) return;
+  const badges = computeBadges();
+  if(!badges.length){ el.innerHTML = '<div class="empty">Complete your first week to earn a badge.</div>'; return; }
+  el.innerHTML = badges.slice().reverse().map(b=>
+    '<div class="badgechip"><span class="emoji">'+b.emoji+'</span><div class="bwrap"><div class="btitle">'+b.title+'</div><div class="bsub">Week '+b.weekNum+' · volume '+b.volume+'</div></div></div>'
+  ).join('');
+}
+function renderTargetWeight(){
+  const el = document.getElementById('targetWeightNote');
+  if(!el) return;
+  const weekNum = getWeekNumberForDate(new Date());
+  const blockIndex = getBlockIndexForWeek(weekNum);
+  const due = state.targetWeightSetAtBlock !== blockIndex;
+  if(state.targetWeight===null){
+    el.textContent = 'No target weight set yet. Set one now — you\'ll be asked again every 6 weeks.';
+  } else if(due){
+    el.textContent = 'Your target was '+state.targetWeight+'kg, set for a previous 6-week block. It\'s time to update it for this block.';
+  } else {
+    el.textContent = 'Current target: '+state.targetWeight+'kg for this 6-week block.';
+  }
+}
+function wireTargetWeight(){
+  const btn = document.getElementById('targetWeightBtn');
+  if(!btn) return;
+  btn.onclick = ()=>{
+    const val = parseFloat(document.getElementById('targetWeightInput').value);
+    if(!val || val<30 || val>250){ showToast('Enter a valid target weight'); return; }
+    const weekNum = getWeekNumberForDate(new Date());
+    state.targetWeight = val;
+    state.targetWeightSetAtBlock = getBlockIndexForWeek(weekNum);
+    saveState();
+    document.getElementById('targetWeightInput').value='';
+    renderTargetWeight(); renderHome();
+    showToast('Target weight saved 🎯');
+  };
+}
+
+/* ============================================================
+   RENDER: Diet tab
+   ============================================================ */
+let currentDiet='weekday';
+function renderDiet(){
+  const el = document.getElementById('mealContainer'); el.innerHTML='';
+  const today = new Date();
+  const blurbEl = document.getElementById('dietBlurb');
+  let meals = [];
+  if(currentDiet==='weekday'){
+    blurbEl.textContent = 'Rotating daily plan pulled from the meal repository — 1200–1500 kcal, chicken, eggs & vegetables as the protein foundation.';
+    const slots = ['breakfast','lunch','snack','dinner'];
+    const labels = {breakfast:['Breakfast','~8:00 AM','🌅'], lunch:['Lunch','~1:00 PM','🍛'], snack:['Evening Snack','~5:00 PM','🍎'], dinner:['Dinner','~8:30 PM','🌙']};
+    slots.forEach((slot,i)=>{
+      const repo = DIET_REPO.weekday[slot];
+      const key = 'diet-weekday-'+slot;
+      const chosenIdx = state.swaps[key];
+      const meal = chosenIdx!==undefined ? repo[chosenIdx] : getMealOfDay(repo, today, i);
+      meals.push(meal);
+      renderMealCard(el, labels[slot][0], labels[slot][1], labels[slot][2], meal, repo, key, chosenIdx);
+    });
+  } else {
+    blurbEl.textContent = 'Weekly cheat day — still capped under ~1800 kcal. One indulgent meal, lighter the rest of the day.';
+    const order = [['breakfast','Breakfast','~8:30 AM','🌅'], ['cheat','Lunch — Cheat Meal','~1:30 PM','😋'], ['treat','Evening Treat','~5:00 PM','🍮'], ['dinner','Dinner','~8:30 PM','🌙']];
+    order.forEach(([slot,label,time,emoji],i)=>{
+      const repo = DIET_REPO.sunday[slot];
+      const key = 'diet-sunday-'+slot;
+      const chosenIdx = state.swaps[key];
+      const meal = chosenIdx!==undefined ? repo[chosenIdx] : getMealOfDay(repo, today, i);
+      meals.push(meal);
+      renderMealCard(el, label, time, emoji, meal, repo, key, chosenIdx);
+    });
+  }
+  const t = computeDietTotals(meals);
+  const totalsDiv=document.createElement('div'); totalsDiv.className='totals';
+  totalsDiv.innerHTML='<div class="t"><div class="n">'+t.p+'g</div><div class="l">Protein</div></div>'+
+                       '<div class="t"><div class="n">'+t.c+'g</div><div class="l">Carbs</div></div>'+
+                       '<div class="t"><div class="n">'+t.f+'g</div><div class="l">Fat</div></div>'+
+                       '<div class="t"><div class="n">~'+t.k+'</div><div class="l">Kcal</div></div>';
+  el.appendChild(totalsDiv);
+
+  document.getElementById('dietRepoNote').textContent = 'Meals rotate automatically from a '+(DIET_REPO.weekday.breakfast.length+DIET_REPO.weekday.lunch.length+DIET_REPO.weekday.snack.length+DIET_REPO.weekday.dinner.length)+'-meal repository so your plan varies day to day. Use the dropdown on any meal to pick a specific option instead.';
+  renderWeightAdjustNote(t.k);
+}
+function renderMealCard(container, name, time, emoji, meal, repo, swapKey, chosenIdx){
+  const div=document.createElement('div'); div.className='meal';
+  const head=document.createElement('div'); head.className='meal-head';
+  head.innerHTML='<span class="meal-name">'+emoji+' '+name+'</span><span class="meal-time">'+time+'</span>';
+  div.appendChild(head);
+  const items=document.createElement('div'); items.className='meal-items'; items.textContent = meal.items;
+  div.appendChild(items);
+  const badgesEl=document.createElement('div'); badgesEl.className='badges';
+  badgesEl.innerHTML='<span class="badge b-p">P '+meal.p+'g</span><span class="badge b-c">C '+meal.c+'g</span><span class="badge b-f">F '+meal.f+'g</span><span class="badge b-k">'+meal.k+' kcal</span>';
+  div.appendChild(badgesEl);
+  const sel=document.createElement('select'); sel.className='swap-meal';
+  const optD=document.createElement('option'); optD.value=''; optD.textContent='Auto (rotates daily)';
+  sel.appendChild(optD);
+  repo.forEach((m,ai)=>{
+    const o=document.createElement('option'); o.value=ai; o.textContent=m.items.slice(0,60)+(m.items.length>60?'…':'');
+    if(chosenIdx!==undefined && +chosenIdx===ai) o.selected=true;
+    sel.appendChild(o);
+  });
+  sel.onchange=()=>{
+    if(sel.value===''){ delete state.swaps[swapKey]; } else { state.swaps[swapKey]=sel.value; }
+    saveState(); renderDiet();
+  };
+  div.appendChild(sel);
+  container.appendChild(div);
+}
+function renderWeightAdjustNote(baseK){
+  const el = document.getElementById('weightAdjustNote');
+  if(!el) return;
+  const lost = getWeightLossKg();
+  if(lost<=0){
+    el.textContent = 'Log your weight in the Progress tab — as you lose weight, your daily calorie target here will auto-adjust down slightly to match your lower maintenance needs.';
+    return;
+  }
+  const adjK = getAdjustedTarget(baseK);
+  if(adjK>=baseK){
+    el.textContent = 'You\'re down '+lost+'kg since your first weigh-in. Target stays ~'+baseK+' kcal for now.';
+  } else {
+    el.textContent = 'You\'re down '+lost+'kg since your first weigh-in. Adjusted target: ~'+adjK+' kcal (was ~'+baseK+'). Trim a small portion to hit this. Never go below 1200 kcal.';
+  }
+}
+function wireDietTabs(){
+  document.querySelectorAll('[data-diet]').forEach(btn=>{
+    btn.onclick=()=>{
+      document.querySelectorAll('[data-diet]').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      currentDiet = btn.dataset.diet;
+      renderDiet();
+    };
+  });
+}
+
+/* ============================================================
+   RENDER: Check-in tab
+   ============================================================ */
+let checkinPhotos = {front:null, back:null, left:null, right:null};
+function renderCheckinTab(){
+  const wkNum = getCurrentCheckinWeek();
+  const statusEl = document.getElementById('checkinStatusNote');
+  if(statusEl){
+    statusEl.textContent = hasCheckinForWeek(wkNum)
+      ? 'Week '+wkNum+' check-in already submitted. You can still submit again to overwrite it.'
+      : 'Week '+wkNum+' check-in is due — front, back, left & right photos plus your weight, ideally on Sunday.';
+  }
+  const histEl = document.getElementById('checkinHistoryList');
+  if(histEl){
+    if(!state.checkins.length){ histEl.innerHTML='<div class="empty">No check-ins yet.</div>'; }
+    else {
+      histEl.innerHTML='';
+      state.checkins.slice().reverse().forEach(c=>{
+        const row=document.createElement('div'); row.className='session';
+        const thumbsHtml = c.images ? '<div class="checkin-history-row">'+['front','back','left','right'].map(k=>c.images[k]?'<img class="checkin-thumb" src="'+c.images[k]+'">':'').join('')+'</div>' : '<div class="srow2">Photos pruned (kept weight only)</div>';
+        row.innerHTML = '<div class="srow1"><span>Week '+c.weekNum+'</span><span>'+c.weight+'kg</span></div><div class="srow2">'+c.date+'</div>'+thumbsHtml;
+        histEl.appendChild(row);
+      });
+    }
+  }
+}
+function wireCheckin(){
+  ['front','back','left','right'].forEach(slot=>{
+    const input = document.getElementById('ci-'+slot);
+    if(!input) return;
+    input.onchange = async ()=>{
+      if(input.files && input.files[0]){
+        try{ checkinPhotos[slot] = await resizeImageFile(input.files[0], 480, 0.6); }
+        catch(e){ /* ignore resize errors, keep null */ }
+      }
+    };
+  });
+  const submitBtn = document.getElementById('checkinSubmitBtn');
+  if(!submitBtn) return;
+  submitBtn.onclick = ()=>{
+    const weight = parseFloat(document.getElementById('checkinWeightInput').value);
+    if(!weight || weight<30 || weight>250){ showToast('Enter a valid weight for this check-in'); return; }
+    const wkNum = getCurrentCheckinWeek();
+    const entry = { weekNum:wkNum, date:new Date().toLocaleDateString(), weight, images:{...checkinPhotos} };
+    const existingIdx = state.checkins.findIndex(c=>c.weekNum===wkNum);
+    if(existingIdx>=0) state.checkins[existingIdx]=entry; else state.checkins.push(entry);
+    state.checkins.sort((a,b)=>a.weekNum-b.weekNum);
+    pruneOldCheckinImages();
+    saveState();
+    checkinPhotos = {front:null, back:null, left:null, right:null};
+    renderCheckinTab(); renderHome();
+    showToast('Check-in submitted ✅');
+  };
+}
+
+/* ============================================================
+   Tab navigation
+   ============================================================ */
+function wireTabs(){
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('view-'+btn.dataset.view).classList.add('active');
+      if(btn.dataset.view==='home') renderHome();
+      if(btn.dataset.view==='workout') renderWorkoutTab();
+      if(btn.dataset.view==='diet') renderDiet();
+      if(btn.dataset.view==='checkin') renderCheckinTab();
+      if(btn.dataset.view==='progress'){ renderWeightTracker(); renderHistory(); renderBadges(); renderTargetWeight(); }
+    };
+  });
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+wireTabs();
+wireWorkoutButtons();
+wireQuestionnaire();
+wireWeightLog();
+wireDietTabs();
+wireCheckin();
+wireTargetWeight();
+
+renderHome();
+renderWorkoutTab();
+renderDiet();
+renderCheckinTab();
+renderWeightTracker();
+renderHistory();
+renderBadges();
+renderTargetWeight();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
